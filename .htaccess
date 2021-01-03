@@ -1,0 +1,22 @@
+php_value newrelic.appname "vicopo.selfbuild.fr"
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_URI} ^/?[^/]+\.csv$ [NC]
+RewriteRule .* - [R=404,L]
+
+RewriteCond %{HTTPS} off
+RewriteCond %{QUERY_STRING} !(city|code|search)=
+RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R,L]
+
+RewriteRule ^(api(\.min)?\.js)$ vicopo/$1 [L]
+RewriteRule ^code-postal/(.+)$ index.php?code=$1 [L,QSA]
+RewriteRule ^ville/(.+)$ index.php?city=$1 [L,QSA]
+RewriteRule ^(re)?chercher?/(.+)$ index.php?search=$2 [L,QSA]
+RewriteRule ^(search|code|city)/(.+)$ index.php?$1=$2 [L,QSA]
+RewriteRule ^(limit-exceeded)(-([^/]+))$ index.php?view=$1&ip=$3 [L,QSA]
+RewriteRule ^(update)(-([^/]+))?$ index.php?view=$1&ip=$3 [L,QSA]
+RewriteRule ^scan\.php 404 [L,QSA]
+RewriteRule ^(admin/.*|api\.php|[^/]+\.(css|js|jpg|ico))$ $1 [L,QSA]
+RewriteRule ^(css/.*)$ public/$1 [L,QSA]
+RewriteRule ^((.well-known|admin-panel|authorization|verify-ip|billing|contact|home|increase-limit|login|logout|register|dashboard|plan|subscribe|user|two-factor-challenge|sanctum|reset-password|forgot-password|livewire|api)(/.*)?)$ public/index.php [L,QSA]

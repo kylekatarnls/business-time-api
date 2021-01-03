@@ -1,0 +1,5 @@
+*.gem
+*.egg-info
+*.pyc
+.idea
+node_modules/

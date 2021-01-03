@@ -1,0 +1,580 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Authorization\AuthorizationFactory;
+use App\Exceptions\PlanOfferException;
+use App\Mail\Contact;
+use App\Mail\PlanChange;
+use App\Models\ApiAuthorization;
+use App\Models\Plan;
+use App\Models\User;
+use App\Util\Number;
+use Carbon\CarbonImmutable;
+use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Session\Store;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Laravel\Cashier\Exceptions\PaymentActionRequired;
+use Laravel\Cashier\Exceptions\PaymentFailure;
+use Laravel\Cashier\Subscription as CashierSubscription;
+use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\InvalidRequestException;
+use Stripe\StripeClient;
+use Throwable;
+
+class Controller extends AbstractController
+{
+    use AuthorizesRequests;
+    use DispatchesJobs;
+    use ValidatesRequests;
+
+    private ?StripeClient $stripeClient = null;
+
+    public function home(): RedirectResponse
+    {
+        return redirect('dashboard');
+    }
+
+    public function contact(Request $request): View
+    {
+        $session = $request->session();
+
+        return \view('contact', [
+            'sent' => $session->pull('sent'),
+            'email' => old('email') ?: Auth::user()?->email,
+        ]);
+    }
+
+    public function exonerate(Request $request): RedirectResponse|View
+    {
+        $session = $request->session();
+        /** @var User $user */
+        $user = Auth::user();
+        $properties = $user?->getAuthorizations();
+
+        if (empty($properties)) {
+            return redirect('dashboard')->with('errors', [
+                __('You need first to register your IP or domain then use the validation to confirm you own it.'),
+            ]);
+        }
+
+        return \view('contact', [
+            'template' => 'exonerate',
+            'selectedProperties' => explode(',', (string) $request->input('properties')),
+            'properties' => $properties,
+            'sent' => $session->pull('sent'),
+            'email' => old('email') ?: $user->email,
+        ]);
+    }
+
+    public function postContact(Request $request): RedirectResponse
+    {
+        $subject = $request->get('template') === 'exonerate'
+            ? __('Exoneration request submitted')
+            : null;
+
+        $route = $request->get('template') === 'exonerate'
+            ? 'exonerate'
+            : 'contact';
+
+        $email = Auth::user()?->email;
+
+        Mail::to($request->get('email') ?: $email)
+            ->send(new Contact([
+                'content' => $request->get('message'),
+            ], $subject));
+
+        Mail::to('kylekatarnls@gmail.com')
+            ->send(new Contact([
+                'template' => $request->get('template'),
+                'properties' => $request->get('properties'),
+                'content' => ($email ? $email . "\n\n" : '') .
+                    $request->get('email') . "\n\n" .
+                    $request->get('message'),
+            ], $subject));
+
+        return redirect()->route($route)->with('sent', true);
+    }
+
+    public function increaseLimit(Request $request, string $ipOrDomain): RedirectResponse
+    {
+        $request->session()->put('increase-limit', $ipOrDomain);
+
+        return $this->home();
+    }
+
+    public function dashboard(Request $request): View
+    {
+        $types = config('app.authorizations');
+        $session = $request->session();
+        /** @var User $user */
+        $user = $request->user();
+        $this->prefillDashboardAuthorization($types, $session);
+        $authorizations = array_map([$this, 'getApiAuthorizationsData'], $types);
+        $defaultAuthorization =
+            Arr::first($authorizations, static fn(object $data) => $session->hasOldInput($data->type)) ?:
+                $authorizations[0];
+        $defaultAuthorization->default = true;
+        $plans = Plan::getPlansData();
+        $planId = collect(array_keys($plans))->first(fn(string $planId) => $user->subscribed($planId));
+        $nextBill = '';
+        $nextCounterReset = '';
+        $subscription = $user->getActiveSubscription();
+
+        if ($subscription) {
+            if (isset($subscription['current_period_end'])) {
+                $nextBill = CarbonImmutable::createFromTimeStamp($subscription['current_period_end'])->calendar();
+            }
+
+            if (isset($subscription['created'])) {
+                $nextCounterReset = $this->getNextCounterReset(
+                    CarbonImmutable::createFromTimeStamp($subscription['created'])
+                );
+            }
+        }
+
+        $paidRequests = $user->getPaidRequests();
+        $limit = $plans[$planId]['limit'] ?? 0;
+
+        return \view('dashboard', [
+            'planId'                => $planId,
+            'plan'                  => $plans[$planId] ?? null,
+            'limit'                 => $limit,
+            'freeLimit'             => $this->getFreePlan()['limit'],
+            'paidRequests'          => $paidRequests,
+            'percentage'            => $limit ? min(1, $paidRequests / $limit) * 100 : null,
+            'nextBill'              => $nextBill,
+            'nextCounterReset'      => $nextCounterReset,
+            'month'                 => CarbonImmutable::now()->monthName,
+            'authorizations'        => $authorizations,
+            'authorizationsCount'   => array_sum(array_map(static fn ($data) => count($data->list), $authorizations)),
+            'authorisationsErrors'  => (array) $session->pull('authorisationsErrors', []),
+            'verifyError'           => $session->pull('verifyError'),
+            'verifiedAuthorization' => $session->pull('verifiedAuthorization'),
+            'errors'                => (array) $session->pull('errors', []),
+        ]);
+    }
+
+    public function plan(Request $request): View
+    {
+        $plans = $this->getPlans();
+        /** @var User $user */
+        $user = $request->user();
+        $credit = $this->getPlansCredit($user, array_keys($plans));
+        $session = $request->session();
+        $currentPlan = Arr::first(Arr::where($plans, static fn (array $plan) => $plan['subscribed']));
+
+        return \view('plan', [
+            'user'               => $user,
+            'credit'             => $credit,
+            'creditCurrency'     => null,
+            'closureFees'        => Number::format($this->getClosureFees() / 100, 2),
+            'stripeKey'          => config('stripe.publishable_key'),
+            'numberOfPlans'      => count($plans),
+            'plans'              => $plans,
+            'currentPlanId'      => $currentPlan['key'] ?? null,
+            'currentRecurrence'  => $currentPlan['recurrence'] ?? null,
+            'selectedPlan'       => $session->pull('selectedPlan'),
+            'selectedRecurrence' => $session->pull('selectedRecurrence'),
+            'selectedCard'       => $session->pull('selectedCard'),
+            'canceled'           => $session->pull('canceled'),
+            'paymentError'       => $session->pull('paymentError'),
+        ]);
+    }
+
+    public function subscribe(Request $request): RedirectResponse|View
+    {
+        return $this->subscribePlan($request, $request->input('plan'));
+    }
+
+    public function subscribePlan(Request $request, string $planId): RedirectResponse|View
+    {
+        return $this->doSubscribePlan($request->user(), $request->session(), [
+            'planId' => $planId,
+            'recurrence' => $request->input('recurrence'),
+            'cardChoice' => $request->input('card'),
+            'stripePaymentMethod' => $request->input('stripePaymentMethod'),
+        ]);
+    }
+
+    public function confirmIntent(Request $request): RedirectResponse|View
+    {
+        $intentId = $request->input('intent');
+        $session = $request->session();
+
+        return $this->doSubscribePlan($request->user(), $session, $session->get('intent-data-' . $intentId));
+    }
+
+    public function rejectIntent(Request $request): RedirectResponse
+    {
+        $intentId = $request->input('intent');
+        $session = $request->session();
+        [
+            'planId' => $planId,
+            'recurrence' => $recurrence,
+            'cardChoice' => $cardChoice,
+        ] = $session->get('intent-data-' . $intentId);
+
+        return $this->goToPlan([
+            'selectedPlan' => $planId,
+            'selectedRecurrence' => $recurrence,
+            'selectedCard' => $cardChoice,
+            'paymentError' => $request->input('error'),
+        ]);
+    }
+
+    public function doSubscribePlan(User $user, Store $store, array $data): RedirectResponse|View
+    {
+        $plans = $this->getPlans();
+        [
+            'planId' => $planId,
+            'recurrence' => $recurrence,
+            'cardChoice' => $cardChoice,
+            'stripePaymentMethod' => $stripePaymentMethod,
+        ] = $data;
+        $plan = $plans[$planId] ?? null;
+
+        if (!$plan) {
+            return $this->goToPlan([
+                'selectedPlan' => $planId,
+                'selectedRecurrence' => $recurrence,
+                'canceled' => $planId,
+                'selectedCard' => $cardChoice,
+            ]);
+        }
+
+        try {
+            $this->recordSubscription(
+                $user,
+                $planId,
+                $recurrence,
+                $stripePaymentMethod,
+                $cardChoice ?? 'new',
+            );
+
+            foreach ($user->getAuthorizations() as $authorization) {
+                $value = $authorization->value;
+                self::clearCache($authorization->type, $value);
+                @unlink(__DIR__ . "/../../../data/properties-grace/$value.txt") ?: false;
+            }
+        } catch (PaymentActionRequired $actionRequired) {
+            Log::notice($actionRequired);
+
+            $intent = $actionRequired->payment->asStripePaymentIntent();
+            $store->put('intent-data-' . $intent->id, $data);
+
+            return \view('payment-authentication', [
+                'user' => $user,
+                'intent' => $intent,
+            ]);
+        } catch (InvalidRequestException | PaymentFailure | PlanOfferException $exception) {
+            Log::critical($exception);
+
+            return $this->goToPlan([
+                'selectedPlan' => $planId,
+                'selectedRecurrence' => $recurrence,
+                'selectedCard' => $cardChoice,
+                'paymentError' => $exception->getMessage(),
+            ]);
+        }
+
+        return $this->home();
+    }
+
+    public function cancelSubscribe(string $plan): RedirectResponse
+    {
+        return redirect('subscribe-cancel')->with('canceled', $plan);
+    }
+
+    public function billingPortal(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->createOrGetStripeCustomer();
+
+        return $user->redirectToBillingPortal();
+    }
+
+    /**
+     * @param User $user
+     * @param string $planId
+     * @param string $recurrence
+     * @param array $paymentData
+     *
+     * @return CashierSubscription
+     *
+     * @throws InvalidRequestException
+     * @throws PaymentActionRequired
+     * @throws PaymentFailure
+     * @throws ApiErrorException
+     * @throws PlanOfferException
+     */
+    protected function recordSubscription(
+        User $user,
+        string $planId,
+        string $recurrence,
+        ?string $stripePaymentMethod,
+        string $cardChoice
+    ): CashierSubscription {
+        $planOffer = config("plan.$planId.price.$recurrence");
+
+        if (!$planOffer) {
+            throw new PlanOfferException(
+                __('Please select the monthly or yearly offer of one of the plans.'),
+            );
+        }
+
+        if ($cardChoice !== 'default' && $stripePaymentMethod) {
+            $user->updateDefaultPaymentMethod($stripePaymentMethod);
+        }
+
+        $subscription = $this->initializeSubscription($user, $planId, $planOffer);
+        $plansData = Plan::getPlansData();
+        $keys = array_keys($plansData);
+
+        $user->refundUntil((int) ceil($this->getPlansCredit($user, $keys)), $keys);
+
+        try {
+            $data = [
+                'content' => __(':plan plan subscribed on :frequency basis.', [
+                    'plan' => $plansData[$planId]['name'],
+                    'frequency' => $recurrence === 'monthly' ? __('monthly') : __('yearly'),
+                ]),
+            ];
+
+            Mail::to($user->email)
+                ->send(new PlanChange($data));
+
+            $data['properties'] = [
+                'user' => $user->email,
+                'plan' => $planId,
+                'recurrence' => $recurrence,
+            ];
+
+            Mail::to('kylekatarnls@gmail.com')
+                ->send(new PlanChange($data));
+        } catch (Throwable $exception) {
+            Log::error($exception);
+        }
+
+        return $subscription;
+    }
+
+    private function getNextCounterReset(CarbonImmutable $creation): string
+    {
+        $now = now();
+
+        if ($creation->day > $now->daysInMonth) {
+            return $now->startOfMonth()->addMonth()->calendar();
+        }
+
+        $date = $now->copy()->setDateTime(
+            // Year and month from current date
+            $now->year, $now->month,
+            // Day and time from creation date-time
+            $creation->day, $creation->hour, $creation->minute, $creation->second, $creation->microsecond,
+        );
+
+        if ($date < $now) {
+            $date = $date->addMonth();
+        }
+
+        if ($date->day !== $creation->day) {
+            $date = $date->startOfMonth();
+        }
+
+        return $date->calendar();
+    }
+
+    private function getStripeClient(): StripeClient
+    {
+        if ($this->stripeClient === null) {
+            $this->stripeClient = new StripeClient([
+                'api_key' => config('stripe.secret_key'),
+            ]);
+        }
+
+        return $this->stripeClient;
+    }
+
+    private function getFreePlan(): Plan
+    {
+        static $data = null;
+
+        if ($data === null) {
+            $data = Plan::fromId('free');
+        }
+
+        return $data;
+    }
+
+    private function getGuestPlan(): Plan
+    {
+        static $data = null;
+
+        if ($data === null) {
+            $data = Plan::fromId('guest');
+        }
+
+        return $data;
+    }
+
+    private function getApiAuthorizationsData(string $type): object
+    {
+        return (object) [
+            'type' => $type,
+            'name' => $this->getApiAuthorizationName($type),
+            'list' => $this->getApiAuthorizationsByType($type),
+        ];
+    }
+
+    private function getApiAuthorizationName(string $type): string
+    {
+        return AuthorizationFactory::fromType($type)->getName();
+    }
+
+    private function getApiAuthorizationsByType(string $type): Collection
+    {
+        static $apiAuthorizations = null;
+
+        if ($apiAuthorizations === null) {
+            $apiAuthorizations = $this->getApiAuthorizations();
+        }
+
+        return $apiAuthorizations
+            ->filter(static fn(ApiAuthorization $apiAuthorization) => $apiAuthorization->type === $type);
+    }
+
+    /**
+     * @param User $user
+     * @param string $planId
+     * @param string $planOffer
+     * @param string|null $paymentMethod
+     *
+     * @return CashierSubscription
+     *
+     * @throws InvalidRequestException
+     * @throws PaymentActionRequired
+     * @throws PaymentFailure
+     */
+    private function initializeSubscription(
+        User $user,
+        string $planId,
+        string $planOffer,
+        ?string $paymentMethod = null
+    ): CashierSubscription {
+        $user->cancelSubscriptionsSilently();
+
+//        $activeSubscription = $user->getActiveSubscription();
+//
+//        if ($activeSubscription instanceof CashierSubscription) {
+//            $activeSubscription->name = $planId;
+//            $user->clearActiveSubscriptionCache();
+//
+//            return $activeSubscription->swap($planId);
+//        }
+
+        return $user->newSubscription($planId, $planOffer)->create(
+            $paymentMethod,
+            ['email' => $user->email],
+        );
+    }
+
+    private function prefillDashboardAuthorization(array $types, Store $session): void
+    {
+        if (!$session->has('increase-limit') || $session->hasOldInput()) {
+            return;
+        }
+
+        $ipOrDomain = $session->get('increase-limit');
+
+        foreach ($types as $type) {
+            if (AuthorizationFactory::fromType($type)->accept($ipOrDomain)) {
+                $session->put("_old_input.$type", $ipOrDomain);
+
+                return;
+            }
+        }
+    }
+
+    private function goToPlan(...$with): RedirectResponse
+    {
+        return redirect('plan')->with(...$with);
+    }
+
+    private function getPlansCredit(?User $user = null, ?array $keys = null): float
+    {
+        $user = $user ?? $this->getUser();
+        $keys = $keys ?? array_keys(Plan::getPlansData());
+        $credit = 0.0;
+
+        foreach ($user->getSubscriptions($keys) as $subscription) {
+            if ($subscription->active()) {
+                $stripeSubscription = $subscription->asStripeSubscription();
+                $start = CarbonImmutable::createFromTimestamp($stripeSubscription['current_period_start']);
+                $end = CarbonImmutable::createFromTimestamp($stripeSubscription['current_period_end']);
+                $total = (float) $end->floatDiffInSeconds($start);
+                $remaining = (float) $end->floatDiffInSeconds();
+                $credit += (float) $subscription->latestInvoice()->rawTotal() *
+                    max(0, min(1, $remaining / $total));
+            }
+        }
+
+        $credit -= $this->getClosureFees();
+
+        return (float) max(0, $credit / 100);
+    }
+
+    private function getClosureFees(): int
+    {
+        return config('app.closure_fees');
+    }
+
+    private function getPlans(): array
+    {
+        $sessions = $this->getStripeClient()->checkout->sessions;
+        $plans = Plan::getPlansData();
+        $keys = array_keys($plans);
+
+        return array_combine($keys, array_map(fn(string $key, Plan $data) => $data->with([
+            'key'           => $key,
+            'subscribed'    => $this->getUser()->subscribed($key),
+            'recurrence'    => $this->getUser()->getSubscriptionRecurrence($key),
+            'monthly_price' => $data->price(),
+            'yearly_price'  => $data->price(0.1),
+            'yearly_saving' => $data->price(0.02),
+            'description'   => $data['limit'] && $data['limit'] < INF
+                ? __('Up to :requests requests per month', [
+                    'requests' => Number::format($data['limit']),
+                ])
+                : __('Unlimited'),
+            'session'       => $sessions->create([
+                'mode'                 => 'payment',
+                'success_url'          => route('subscribe-plan', ['plan' => $key]),
+                'cancel_url'           => route('subscribe-cancel', ['plan' => $key]),
+                'payment_method_types' => ['card'],
+                'line_items'           => [
+                    [
+                        'quantity'   => 1,
+                        'price_data' => [
+                            'product'     => $data['product'],
+                            'unit_amount' => $data['price'],
+                            'currency'    => $data['currency'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]), $keys, $plans));
+    }
+}

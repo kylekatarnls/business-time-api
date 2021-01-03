@@ -1,0 +1,159 @@
+name: Dusk
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0.21
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: vicopo_dusk
+        ports:
+          - 33306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      redis:
+        image: redis:5.0
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json  dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, redis, memcached
+          tools: composer:v2
+          coverage: none
+
+      - name: Install locales
+        run: sudo apt-get update && sudo apt-get install tzdata locales -y && sudo locale-gen fr_FR.UTF-8 en_US.UTF-8
+
+      - name: Setup Memcached
+        uses: niden/actions-memcached@v7
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Check Composer Cache
+        id: composer-cache-check
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Get NPM Cache Directory
+        id: npm-cache
+        run: echo "::set-output name=dir::$(npm config get cache)"
+
+      - name: Check NPM Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Composer Dependencies
+        run: |
+          composer install;
+          composer require --dev "orchestra/testbench-dusk";
+
+      - name: Install NPM Dependencies
+        run: npm install
+
+      - name: Update Dusk Drivers
+        run: vendor/bin/dusk-updater detect --auto-update
+
+      - name: Initialize Environment
+        run: |
+          cp .env.dusk.template .env
+          chmod -R 777 storage bootstrap/cache
+          php artisan key:generate
+          php artisan config:clear
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+          STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
+          START_PLAN_PRODUCT: ${{ secrets.START_PLAN_PRODUCT }}
+          PRO_PLAN_PRODUCT: ${{ secrets.PRO_PLAN_PRODUCT }}
+          PREMIUM_PLAN_PRODUCT: ${{ secrets.PREMIUM_PLAN_PRODUCT }}
+          START_PLAN_MONTHLY_PRICE_ID: ${{ secrets.START_PLAN_MONTHLY_PRICE_ID }}
+          START_PLAN_YEARLY_PRICE_ID: ${{ secrets.START_PLAN_YEARLY_PRICE_ID }}
+          PRO_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PRO_PLAN_MONTHLY_PRICE_ID }}
+          PRO_PLAN_YEARLY_PRICE_ID: ${{ secrets.PRO_PLAN_YEARLY_PRICE_ID }}
+          PREMIUM_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_MONTHLY_PRICE_ID }}
+          PREMIUM_PLAN_YEARLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_YEARLY_PRICE_ID }}
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_USERNAME: root
+
+      - name: Initialize Cities And Zip Codes
+        run: |
+          cp bdd-test.csv bdd3.csv -f
+          php job/refresh.php --local
+
+      - name: Start Server
+        run: |
+          php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+          chmod -R 0755 vendor/laravel/dusk/bin/
+          npm run production
+          php artisan serve --port=8001 > /dev/null 2>&1 &
+          curl localhost:8001 &
+          ./vendor/laravel/dusk/bin/chromedriver-linux > /dev/null 2>&1 &
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+          STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
+          START_PLAN_PRODUCT: ${{ secrets.START_PLAN_PRODUCT }}
+          PRO_PLAN_PRODUCT: ${{ secrets.PRO_PLAN_PRODUCT }}
+          PREMIUM_PLAN_PRODUCT: ${{ secrets.PREMIUM_PLAN_PRODUCT }}
+          START_PLAN_MONTHLY_PRICE_ID: ${{ secrets.START_PLAN_MONTHLY_PRICE_ID }}
+          START_PLAN_YEARLY_PRICE_ID: ${{ secrets.START_PLAN_YEARLY_PRICE_ID }}
+          PRO_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PRO_PLAN_MONTHLY_PRICE_ID }}
+          PRO_PLAN_YEARLY_PRICE_ID: ${{ secrets.PRO_PLAN_YEARLY_PRICE_ID }}
+          PREMIUM_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_MONTHLY_PRICE_ID }}
+          PREMIUM_PLAN_YEARLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_YEARLY_PRICE_ID }}
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_USERNAME: root
+
+      - name: Run Test Suite
+        run: php artisan dusk
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+          STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
+          STRIPE_SECRET: ${{ secrets.STRIPE_SECRET }}
+          START_PLAN_PRODUCT: ${{ secrets.START_PLAN_PRODUCT }}
+          PRO_PLAN_PRODUCT: ${{ secrets.PRO_PLAN_PRODUCT }}
+          PREMIUM_PLAN_PRODUCT: ${{ secrets.PREMIUM_PLAN_PRODUCT }}
+          START_PLAN_MONTHLY_PRICE_ID: ${{ secrets.START_PLAN_MONTHLY_PRICE_ID }}
+          START_PLAN_YEARLY_PRICE_ID: ${{ secrets.START_PLAN_YEARLY_PRICE_ID }}
+          PRO_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PRO_PLAN_MONTHLY_PRICE_ID }}
+          PRO_PLAN_YEARLY_PRICE_ID: ${{ secrets.PRO_PLAN_YEARLY_PRICE_ID }}
+          PREMIUM_PLAN_MONTHLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_MONTHLY_PRICE_ID }}
+          PREMIUM_PLAN_YEARLY_PRICE_ID: ${{ secrets.PREMIUM_PLAN_YEARLY_PRICE_ID }}
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_USERNAME: root

@@ -1,0 +1,3 @@
+[submodule "vicopo"]
+	path = vicopo
+	url = https://github.com/kylekatarnls/vicopo.git
