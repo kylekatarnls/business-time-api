@@ -9,10 +9,10 @@ $statements = (string) $metrics['statements'] ?? 0;
 $coveredStatements = (string) $metrics['coveredstatements'] ?? 0;
 
 $status = sprintf(
-    '%s / %s — %s %%',
+    '%s %% — %s / %s',
+    number_format(100.0 * $coveredStatements / max($statements, 1), 2),
     $coveredStatements,
     $statements,
-    number_format(100.0 * $coveredStatements / max($statements, 1), 2),
 );
 
 if (!in_array('--send', $argv ?? [])) {
