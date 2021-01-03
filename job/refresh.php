@@ -131,8 +131,9 @@ if (!empty($cities)) {
 		);
 	}
 
-	$corseA = array_filter($cities['20'], static fn($code) => substr($code, 0, 3) < 202, ARRAY_FILTER_USE_KEY);
-    $corseB = array_filter($cities['20'], static fn($code) => substr($code, 0, 3) >= 202, ARRAY_FILTER_USE_KEY);
+	$corseCities = $cities['20'] ?? [];
+	$corseA = array_filter($corseCities, static fn($code) => substr($code, 0, 3) < 202, ARRAY_FILTER_USE_KEY);
+    $corseB = array_filter($corseCities, static fn($code) => substr($code, 0, 3) >= 202, ARRAY_FILTER_USE_KEY);
 
     file_put_contents(
         BASE_DIR . 'data/2A.php',
