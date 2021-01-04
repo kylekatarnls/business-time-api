@@ -112,6 +112,12 @@ jobs:
           cp bdd-test.csv bdd3.csv -f
           php job/refresh.php --local
 
+      - name: Initialize Database
+        run: php artisan migrate --force
+        env:
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_USERNAME: root
+
       - name: Start Server
         run: |
           php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`

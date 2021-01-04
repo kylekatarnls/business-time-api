@@ -69,6 +69,12 @@ jobs:
           php artisan key:generate
           php artisan config:clear
 
+      - name: Initialize Database
+        run: php artisan migrate --force
+        env:
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
+          DB_USERNAME: root
+
       - name: Initialize Cities And Zip Codes
         run: |
           cp bdd-test.csv bdd3.csv -f
