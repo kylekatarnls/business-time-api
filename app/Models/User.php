@@ -272,6 +272,16 @@ final class User extends Authenticatable
         }
     }
 
+    public function hasVerifiedProperties(): bool
+    {
+        return $this->apiAuthorizations->whereNotNull('verified_at')->count() > 0;
+    }
+
+    public function canSubscribeAPlan(): bool
+    {
+        return $this->hasStripeId() || $this->hasVerifiedProperties();
+    }
+
     public function getActiveSubscription(): ?Subscription
     {
         if (!$this->activeSubscriptionCached) {

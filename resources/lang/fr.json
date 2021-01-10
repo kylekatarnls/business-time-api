@@ -157,7 +157,7 @@
     "Invalid format.": "Format invalide.",
     "Unknown error.": "Erreur inconnue.",
     "\":value\" is already registered.": "\":value\" est déjà enregistré.",
-    "Before you can start to use \":value\", we need to verify you own it. Please download the following file :link and upload it to make it available at the URL :url (or equivalent with https).": "Avant que vous puissiez commencer à utiliser \":value\", nous devons vérifier que vous en êtes le propriétaire. Veuillez télécharger le fichier :link et le publier pour le rendre accessible à l'URL :url (ou l'équivalent en https).",
+    "Before you can start to use \":value\", we need to verify you own it. Please download the following file :link and upload it to make it available at the URL :url (or equivalent with https, \".well-known\" directory is also optional).": "Avant que vous puissiez commencer à utiliser \":value\", nous devons vérifier que vous en êtes le propriétaire. Veuillez télécharger le fichier :link et le publier pour le rendre accessible à l'URL :url (ou l'équivalent en https, le dossier \".well-known\" est également optionnel).",
     "Before you can start to use \":value\", we need to verify you own it. Please send a GET request from within your server (using <code>wget</code>, <code>curl</code> or any tool) to :link with the same IP address exposed as sender.": "Avant que vous puissiez commencer à utiliser \":value\", nous devons vérifier que vous en êtes le propriétaire. Veuillez envoyer une requête GET depuis votre serveur (en utilisant <code>wget</code>, <code>curl</code> ou autre) vers :link avec la même adresse IP exposée en tant que client.",
     "The token :token is not for the exposed IP(s): :ip. Please access this URL from within your server with the IP you want to verify.": "Le jeton :token n'est pas pour la/les IP(s): :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP que vous souhaitez vérifier.",
     "Unable to verify due to unknown error, please retry.": "Une erreur inconnue s'est produite lors de la vérification, veuillez réessayer.",
@@ -212,7 +212,7 @@
     "Each verified domain or IP get :requests requests per month for free.": "Chaque domaine ou IP vérifié obtient :requests requêtes gratuites par mois.",
     "Your :plan subscription allow you :requests more requests per month shared among your properties.": "Votre abonnement :plan vous donne droit à :requests requêtes de plus par mois partagées entre vos propriétés.",
     "Raise account total limit": "Augmenter la limite totale",
-    "You can raise the total limit for your account subscribing a plan.": "vous pouvez augmenter la limite totale pour votre compte en vous abonnant.",
+    "You can raise the total limit for your account subscribing a plan.": "Vous pouvez augmenter la limite totale pour votre compte en vous abonnant.",
     "Free": "Gratuites",
     "Paid": "Payantes",
     "Blocked": "Bloquées",
@@ -330,5 +330,7 @@
     "Plan Change Confirmation": "Confirmation d'abonnement",
     ":plan plan subscribed on :frequency basis.": "Abonnement :plan souscrit en échéance :frequencyle.",
     ":amount from the ongoing previous subscription will be deduced from next payments.": ":amount de reliquat de l'abonnement précédent sera déduits des prochaines échéances de paiement.",
-    "Any subscription can be stopped at any moment, refunding to you the remaining credit.": "N'importe quel abonnement peut être interrompu à tout moment, le crédit non utilisé vous est alors remboursé."
+    "Any subscription can be stopped at any moment, refunding to you the remaining credit.": "N'importe quel abonnement peut être interrompu à tout moment, le crédit non utilisé vous est alors remboursé.",
+    "Use the :subDomain precise sub-domain (to exclude other sub-domains of the same top level domain.": "Utiliser le sous-domaine précis :subDomain (pour exclure les autres sous-domaines du même domaine de premier niveau).",
+    "First, please register your website or server and give it a name.": "Tout d'abord, veuillez enregistrer votre site web ou serveur et lui donner un nom."
 }

@@ -143,21 +143,42 @@ final class AuthorizationController extends AbstractController
         return $response ?: '';
     }
 
+    private function getPossibleDeployedTokensContents(ApiAuthorization $authorization, &$fileName = null): iterable
+    {
+        $prefixes = ['.well-known/', ''];
+        $protocols = ['https', 'http'];
+        $value = $authorization->value;
+        $fileName = $authorization->getVerificationFileName();
+
+        foreach ($protocols as $protocol) {
+            foreach ($prefixes as $prefix) {
+                yield trim(static::getUnsecureContent("$protocol://$value/$prefix$fileName"));
+            }
+        }
+    }
+
+    private function isTokenDeployed(ApiAuthorization $authorization, &$fileName = null): bool
+    {
+        $token = $authorization->getVerificationToken();
+
+        foreach ($this->getPossibleDeployedTokensContents($authorization, $fileName) as $content) {
+            if ($token === $content) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function checkVerificationFile(ApiAuthorization $authorization): ?string
     {
         if (!$authorization->needsManualVerification()) {
             return __('IP needs to be verified by call from inside the server.');
         }
 
-        $path = $authorization->value . '/' . $authorization->getVerificationFileName();
-        $values = array_map(
-            static fn (string $protocol) => trim(static::getUnsecureContent("$protocol://$path")),
-            ['http', 'https'],
-        );
-
-        if (!in_array($authorization->getVerificationToken(), $values, true)) {
+        if (!$this->isTokenDeployed($authorization, $fileName)) {
             return __('The URL :url did not output ":token".', [
-                'url' => 'https://' . $path,
+                'url' => 'http://' . $authorization->value . '/.well-known/' . $fileName,
                 'token' => $authorization->getVerificationToken(),
             ]);
         }

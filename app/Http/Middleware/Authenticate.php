@@ -15,7 +15,13 @@ class Authenticate extends Middleware
     protected function redirectTo($request)
     {
         if (! $request->expectsJson()) {
-            return route('login');
+            $property = $request->query->get('property');
+
+            if ($property) {
+                $request->session()->put('property', $property);
+            }
+
+            return route($request->cookie('vuid') ? 'login' : 'register');
         }
     }
 }

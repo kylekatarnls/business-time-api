@@ -15,19 +15,25 @@
                     <x-jet-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-jet-nav-link>
-                    <x-jet-nav-link href="{{ route('plan') }}" :active="request()->routeIs('plan')">
-                        {{ __('Plan') }}
-                    </x-jet-nav-link>
+
+                    @if(Auth::user()?->canSubscribeAPlan())
+                        <x-jet-nav-link href="{{ route('plan') }}" :active="request()->routeIs('plan')">
+                            {{ __('Plan') }}
+                        </x-jet-nav-link>
+                    @endif
+
                     @if(config('app.features.contact'))
                         <x-jet-nav-link href="{{ route('contact') }}" :active="request()->routeIs('contact')">
                             {{ __('Contact') }}
                         </x-jet-nav-link>
                     @endif
-                    @if(Auth::user()->hasStripeId())
+
+                    @if(Auth::user()?->hasStripeId())
                         <x-jet-nav-link href="{{ route('billing') }}" :active="request()->routeIs('billing')">
                             {{ __('Billing') }}
                         </x-jet-nav-link>
                     @endif
+
                     <x-jet-nav-link href="/">
                         {{ __('Documentation') }}
                     </x-jet-nav-link>
@@ -156,19 +162,25 @@
             <x-jet-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-jet-responsive-nav-link>
-            <x-jet-responsive-nav-link href="{{ route('plan') }}" :active="request()->routeIs('plan')">
-                {{ __('Plan') }}
-            </x-jet-responsive-nav-link>
+
+            @if(Auth::user()?->canSubscribeAPlan())
+                <x-jet-responsive-nav-link href="{{ route('plan') }}" :active="request()->routeIs('plan')">
+                    {{ __('Plan') }}
+                </x-jet-responsive-nav-link>
+            @endif
+
             @if(config('app.features.contact'))
                 <x-jet-responsive-nav-link href="{{ route('contact') }}" :active="request()->routeIs('contact')">
                     {{ __('Contact') }}
                 </x-jet-responsive-nav-link>
             @endif
-            @if(Auth::user()->hasStripeId())
+
+            @if(Auth::user()?->hasStripeId())
                 <x-jet-responsive-nav-link href="{{ route('billing') }}" :active="request()->routeIs('billing')">
                     {{ __('Billing') }}
                 </x-jet-responsive-nav-link>
             @endif
+
             <x-jet-responsive-nav-link href="/">
                 {{ __('Documentation') }}
             </x-jet-responsive-nav-link>

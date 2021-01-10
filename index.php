@@ -53,7 +53,11 @@ function jsfiddle($code, $tabs = 'js,html,result'): void {
 		<img src="city.jpg" alt="VICOPO" width="168" height="85" class="city-background">
 		<h1>
             <?php if ($config['app']['features']['account'] ?? false): ?>
-                <a href="/dashboard" class="account-button"><?= match($config['app']['locale']) {
+                <a href="/dashboard<?php
+                    if (!empty($_GET['ip'])) {
+                        echo '?property=' . urlencode($_GET['ip']);
+                    }
+                ?>" class="account-button"><?= match($config['app']['locale']) {
                     'fr' => 'Compte',
                     default => 'Account',
                 } ?></a>

@@ -19,11 +19,14 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Session\Store;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response as ResponseFacade;
 use Laravel\Cashier\Exceptions\PaymentActionRequired;
 use Laravel\Cashier\Exceptions\PaymentFailure;
 use Laravel\Cashier\Subscription as CashierSubscription;
@@ -118,14 +121,25 @@ class Controller extends AbstractController
         return $this->home();
     }
 
-    public function dashboard(Request $request): View
+    public function dashboard(Request $request): Response
     {
         $types = config('app.authorizations');
         $session = $request->session();
+        $property = $request->query->get('property') ?: $session->get('property');
+        $isIP = $property && preg_match('/^\d/', $property);
+        $subDomain = $isIP ? null : $property;
+        $ip = $isIP ? $property : null;
+        $domain = $subDomain && preg_match('/^(?:.+)?\.([^.]+\.[a-z]+)$/', $subDomain, $match)
+            ? $match[1]
+            : null;
+        $defaultValues = compact('ip', 'domain');
         /** @var User $user */
         $user = $request->user();
         $this->prefillDashboardAuthorization($types, $session);
-        $authorizations = array_map([$this, 'getApiAuthorizationsData'], $types);
+        $authorizations = array_map(
+            fn(string $type) => $this->getApiAuthorizationsData($type, $defaultValues[$type] ?? null),
+            $types,
+        );
         $defaultAuthorization =
             Arr::first($authorizations, static fn(object $data) => $session->hasOldInput($data->type)) ?:
                 $authorizations[0];
@@ -151,7 +165,16 @@ class Controller extends AbstractController
         $paidRequests = $user->getPaidRequests();
         $limit = $plans[$planId]['limit'] ?? 0;
 
-        return \view('dashboard', [
+        $view = ResponseFacade::view('dashboard', [
+            'domain'                => $domain,
+            'name'                  => old('name') ?: ($isIP
+                ? 'Server'
+                : preg_replace('/\.[a-z]+$/', '', $domain ?: '')),
+            'subDomain'             => $subDomain,
+            'ip'                    => $ip,
+            'property'              => $property,
+            'isIP'                  => $isIP,
+            'type'                  => old('type') ?: ($isIP ? 'ip' : null),
             'planId'                => $planId,
             'plan'                  => $plans[$planId] ?? null,
             'limit'                 => $limit,
@@ -167,7 +190,16 @@ class Controller extends AbstractController
             'verifyError'           => $session->pull('verifyError'),
             'verifiedAuthorization' => $session->pull('verifiedAuthorization'),
             'errors'                => (array) $session->pull('errors', []),
+            'hasVerifiedProperties' => $user->hasVerifiedProperties(),
         ]);
+
+        if (!$request->cookie('vuid')) {
+            $view->headers->setCookie(
+                Cookie::forever('vuid', $user->email),
+            );
+        }
+
+        return $view;
     }
 
     public function plan(Request $request): View
@@ -362,6 +394,10 @@ class Controller extends AbstractController
             );
         }
 
+        if (!$user->hasStripeId()) {
+            $user->createAsStripeCustomer();
+        }
+
         if ($cardChoice !== 'default' && $stripePaymentMethod) {
             $user->updateDefaultPaymentMethod($stripePaymentMethod);
         }
@@ -455,12 +491,13 @@ class Controller extends AbstractController
         return $data;
     }
 
-    private function getApiAuthorizationsData(string $type): object
+    private function getApiAuthorizationsData(string $type, $defaultValue = null): object
     {
         return (object) [
-            'type' => $type,
-            'name' => $this->getApiAuthorizationName($type),
-            'list' => $this->getApiAuthorizationsByType($type),
+            'type'  => $type,
+            'name'  => $this->getApiAuthorizationName($type),
+            'list'  => $this->getApiAuthorizationsByType($type),
+            'value' => old($type) ?? $defaultValue,
         ];
     }
 

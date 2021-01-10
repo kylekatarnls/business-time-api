@@ -16,10 +16,10 @@ class Domain implements Authorization
         $fileName = $authorization->getVerificationFileName();
         $value = $authorization->value;
 
-        return __('Before you can start to use ":value", we need to verify you own it. Please download the following file :link and upload it to make it available at the URL :url (or equivalent with https).', [
+        return __('Before you can start to use ":value", we need to verify you own it. Please download the following file :link and upload it to make it available at the URL :url (or equivalent with https, ".well-known" directory is also optional).', [
             'value' => $value,
             'link' => '<a class="text-gray-600" href="'. route('authorization-verification', ['ipOrDomain' => $value]) . '">' . $fileName . '</a>',
-            'url' => 'http://' . $value . '/' . $fileName,
+            'url' => 'http://' . $value . '/.well-known/' . $fileName,
         ]);
     }
 
