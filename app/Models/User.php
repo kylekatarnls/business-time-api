@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,23 +13,31 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Laravel\Cashier\Billable;
 use Laravel\Cashier\Subscription as CashierSubscription;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Stripe\Refund as StripeRefund;
 use Stripe\Subscription;
 use Throwable;
 
 /**
+ * @property int $id
  * @property string $email
  * @property string $name
- * @property Collection<CashierSubscription> $subscriptions
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  * @property Collection<ApiAuthorization> apiAuthorizations
+ * @property Collection<Refund> refunds
+ * @property Collection<CashierSubscription> $subscriptions
  */
 final class User extends Authenticatable
 {
-    use Billable;
+    use Billable {
+        refund as billableRefund;
+    }
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
@@ -86,6 +95,11 @@ final class User extends Authenticatable
         return $this->hasMany(ApiAuthorization::class);
     }
 
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
+    }
+
     /**
      * @return ApiAuthorization[]
      */
@@ -95,6 +109,17 @@ final class User extends Authenticatable
         $authorizations = $this->apiAuthorizations()->get();
 
         return $authorizations;
+    }
+
+    /**
+     * @return Refund[]
+     */
+    public function getRefunds()
+    {
+        /** @var Refund[] $refunds */
+        $refunds = $this->refunds()->get();
+
+        return $refunds;
     }
 
     /**
@@ -170,10 +195,64 @@ final class User extends Authenticatable
         return array_search($subscription->stripe_plan, $plan, true) ?: null;
     }
 
-    public function refundUntil(int $credit, ?array $keys = null): void
+    public function addRefund(StripeRefund $refund)
+    {
+        $this->refunds()->create([
+            'cents_amount' => $refund->amount,
+            'currency' => $refund->currency,
+            'stripe_refund_id' => $refund->id,
+            'payment_intent' => $refund->payment_intent,
+            'balance_transaction' => $refund->balance_transaction,
+            'charge' => $refund->charge,
+            'status' => $refund->status,
+        ]);
+    }
+
+    public function refund($paymentIntent, array $options = []): StripeRefund
+    {
+        $stripeRefund = $this->billableRefund($paymentIntent, $options);
+
+        return $stripeRefund;
+    }
+
+    public function addBalance(float $credit): void
+    {
+        if ($credit < 0) {
+            throw new InvalidArgumentException('Negative balance cannot be added, use subBalance() instead.');
+        }
+
+        if ($credit < 0.01) {
+            return;
+        }
+    }
+
+    public function getBalance(): float
+    {
+        return 0.01 * $this->asStripeCustomer()->balance;
+    }
+
+    public function subBalance(float $credit): void
+    {
+        if ($credit < 0) {
+            throw new InvalidArgumentException('Negative balance cannot be subtracted, use addBalance() instead.');
+        }
+
+        if ($credit < 0.01) {
+            return;
+        }
+    }
+
+    /**
+     * Refund a given amount of Euros.
+     *
+     * @param float $credit
+     * @param array|null $keys
+     */
+    public function refundUntil(float $credit, ?array $keys = null): void
     {
         if ($credit > 0) {
-            Log::info('Refund ' . number_format($credit / 100, 2) . ' to ' . $this->email);
+            Log::info('Refund ' . number_format($credit, 2) . ' to ' . $this->email);
+            $credit = (int) ceil($credit * 100);
 
             foreach ($this->getSubscriptions($keys) as $subscription) {
                 if ($subscription->active()) {

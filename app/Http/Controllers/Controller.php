@@ -24,14 +24,18 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Exceptions\PaymentActionRequired;
 use Laravel\Cashier\Exceptions\PaymentFailure;
 use Laravel\Cashier\Subscription as CashierSubscription;
+use Stripe\Charge;
+use Stripe\Collection as StripeCollection;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Exception\InvalidRequestException;
+use Stripe\Invoice;
+use Stripe\PaymentIntent;
+use Stripe\Refund;
 use Stripe\StripeClient;
-use Throwable;
+use Stripe\SubscriptionItem;
 
 class Controller extends AbstractController
 {
@@ -90,19 +94,19 @@ class Controller extends AbstractController
 
         $email = Auth::user()?->email;
 
-        Mail::to($request->get('email') ?: $email)
-            ->send(new Contact([
+        $this->sendMail(
+            $request->get('email') ?: $email,
+            new Contact([
                 'content' => $request->get('message'),
-            ], $subject));
-
-        Mail::to('kylekatarnls@gmail.com')
-            ->send(new Contact([
+            ], $subject),
+            [
                 'template' => $request->get('template'),
                 'properties' => $request->get('properties'),
                 'content' => ($email ? $email . "\n\n" : '') .
                     $request->get('email') . "\n\n" .
                     $request->get('message'),
-            ], $subject));
+            ],
+        );
 
         return redirect()->route($route)->with('sent', true);
     }
@@ -171,15 +175,38 @@ class Controller extends AbstractController
         $plans = $this->getPlans();
         /** @var User $user */
         $user = $request->user();
-        $credit = $this->getPlansCredit($user, array_keys($plans));
+
+        $activeSubscription = $user->getActiveSubscription();
+        $credit = 0.0;
+
+        if ($activeSubscription) {
+            $items = array_map(static fn(SubscriptionItem $item) => [
+                'id' => $item->id,
+                'price' => $item->price->id,
+            ], iterator_to_array($activeSubscription->items));
+            $invoice = Invoice::upcoming([
+                'customer'                    => $activeSubscription->customer,
+                'subscription'                => $activeSubscription->id,
+                'subscription_items'          => $items,
+                'subscription_proration_date' => time() + 600,
+            ]);
+
+            $remainingCreditCents = (int) $invoice['amount_remaining'] ?? 0;
+
+            if ($remainingCreditCents > 0) {
+                $credit = 0.01 * $remainingCreditCents;
+            }
+        }
+
         $session = $request->session();
         $currentPlan = Arr::first(Arr::where($plans, static fn (array $plan) => $plan['subscribed']));
+        $closureFees = $this->getClosureFees();
 
         return \view('plan', [
             'user'               => $user,
             'credit'             => $credit,
             'creditCurrency'     => null,
-            'closureFees'        => Number::format($this->getClosureFees() / 100, 2),
+            'closureFees'        => $closureFees ? Number::format($this->getClosureFees(), 2) : null,
             'stripeKey'          => config('stripe.publishable_key'),
             'numberOfPlans'      => count($plans),
             'plans'              => $plans,
@@ -341,32 +368,30 @@ class Controller extends AbstractController
 
         $subscription = $this->initializeSubscription($user, $planId, $planOffer);
         $plansData = Plan::getPlansData();
-        $keys = array_keys($plansData);
+        $mailContent = __(':plan plan subscribed on :frequency basis.', [
+            'plan' => $plansData[$planId]['name'],
+            'frequency' => $recurrence === 'monthly' ? __('monthly') : __('yearly'),
+        ]);
+        // $keys = array_keys($plansData);
+        // $refundAmount = $this->getPlansCredit($user, $keys);
+        // $user->addBalance($refundAmount);
+        // $mailContent .= "\n\n" . __(':amount from the ongoing previous subscription will be deduced from next payments.', [
+        //     'amount' => price(Number::format($refundAmount, 2)),
+        // ]);
 
-        $user->refundUntil((int) ceil($this->getPlansCredit($user, $keys)), $keys);
-
-        try {
-            $data = [
-                'content' => __(':plan plan subscribed on :frequency basis.', [
-                    'plan' => $plansData[$planId]['name'],
-                    'frequency' => $recurrence === 'monthly' ? __('monthly') : __('yearly'),
-                ]),
-            ];
-
-            Mail::to($user->email)
-                ->send(new PlanChange($data));
-
-            $data['properties'] = [
-                'user' => $user->email,
-                'plan' => $planId,
-                'recurrence' => $recurrence,
-            ];
-
-            Mail::to('kylekatarnls@gmail.com')
-                ->send(new PlanChange($data));
-        } catch (Throwable $exception) {
-            Log::error($exception);
-        }
+        $this->sendMailSilently(
+            $user->email,
+            new PlanChange([
+                'content' => $mailContent,
+            ]),
+            [
+                'properties' => [
+                    'user' => $user->email,
+                    'plan' => $planId,
+                    'recurrence' => $recurrence,
+                ],
+            ],
+        );
 
         return $subscription;
     }
@@ -513,11 +538,62 @@ class Controller extends AbstractController
         return redirect('plan')->with(...$with);
     }
 
+    /**
+     * @return StripeCollection|Charge[]
+     */
+    private function getUserCharges(?string $customerId): StripeCollection
+    {
+        return $customerId
+            ? $this->getStripeClient()->charges->all(['customer' => $customerId])
+            : new StripeCollection();
+    }
+
+    /**
+     * @return StripeCollection|PaymentIntent[]
+     */
+    private function getUserPaymentsIntents(?string $customerId): StripeCollection
+    {
+        return $customerId
+            ? $this->getStripeClient()->paymentIntents->all(['customer' => $customerId])
+            : new StripeCollection();
+    }
+
+    /**
+     * @return StripeCollection|Refund[]
+     */
+    private function getUserRefunds(?string $customerId): StripeCollection
+    {
+        return $customerId
+            ? $this->getStripeClient()->refunds->all()
+            : new StripeCollection();
+    }
+
+    /**
+     * Remaining credits in Euros.
+     *
+     * @param User|null $user
+     * @param string[]|null $keys
+     *
+     * @return float
+     */
     private function getPlansCredit(?User $user = null, ?array $keys = null): float
     {
         $user = $user ?? $this->getUser();
         $keys = $keys ?? array_keys(Plan::getPlansData());
         $credit = 0.0;
+        $customerId = $user?->stripeId();
+
+        foreach ($this->getUserCharges($customerId) as $charge) {
+            $credit += $charge->amount_received / 100;
+        }
+
+        foreach ($this->getUserPaymentsIntents($customerId) as $paymentIntent) {
+            $credit += $paymentIntent->amount_received / 100;
+        }
+
+        foreach (($user?->getRefunds() ?? []) as $refund) {
+            $credit -= $refund->getAmount();
+        }
 
         foreach ($user->getSubscriptions($keys) as $subscription) {
             if ($subscription->active()) {
@@ -533,12 +609,17 @@ class Controller extends AbstractController
 
         $credit -= $this->getClosureFees();
 
-        return (float) max(0, $credit / 100);
+        return (float) max(0, ceil($credit) / 100);
     }
 
-    private function getClosureFees(): int
+    /**
+     * Closure fees in Euros.
+     *
+     * @return float
+     */
+    private function getClosureFees(): float
     {
-        return config('app.closure_fees');
+        return 0.01 * config('app.closure_fees');
     }
 
     private function getPlans(): array

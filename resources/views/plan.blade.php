@@ -151,9 +151,13 @@
 
                 <p class="mt-6">{{ __('The requests count is added to your account and shared across your domains and IPs if you record multiple ones. It will be reset every month.') }}</p>
 
-                <p class="mt-6">{{ __('Any subscription can be stopped at any moment, refunding to you the remaining credit subtracted from :fees of closure fees.', [
-                    'fees' => price($closureFees),
-                ]) }}</p>
+                @if($closureFees)
+                    <p class="mt-6">{{ __('Any subscription can be stopped at any moment, refunding to you the remaining credit subtracted from :fees of closure fees.', [
+                        'fees' => price($closureFees),
+                    ]) }}</p>
+                @else
+                    <p class="mt-6">{{ __('Any subscription can be stopped at any moment, refunding to you the remaining credit.') }}</p>
+                @endif
 
                 <script>
                     var stripe = Stripe('{{ config('stripe.publishable_key') }}');

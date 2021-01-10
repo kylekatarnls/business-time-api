@@ -10,18 +10,18 @@ final class PlanChange extends Mailable
 {
     use Queueable, SerializesModels;
 
-    private array $data;
-
     private ?string $initialSubject;
 
     /**
      * Create a new message instance.
      *
+     * @param array{content: string, properties?: string[]} $data
+     *
      * @return void
      */
     public function __construct(array $data, ?string $subject = null)
     {
-        $this->data = $data;
+        $this->viewData = $data;
         $this->initialSubject = $subject;
     }
 
@@ -34,6 +34,6 @@ final class PlanChange extends Mailable
     {
         return $this->from('no-reply@selfbuild.fr', 'Vicopo')
             ->subject($this->initialSubject ?? __('Plan Change Confirmation'))
-            ->view('emails.plan', $this->data);
+            ->view('emails.plan');
     }
 }

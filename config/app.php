@@ -129,7 +129,7 @@ return [
 
     'default_currency' => 'eur',
 
-    'closure_fees' => (int) env('CLOSURES_FEES', 500),
+    'closure_fees' => (int) env('CLOSURES_FEES', 0),
 
     'features' => [
         'account' => (bool) env('FEATURE_ACCOUNT', false),
