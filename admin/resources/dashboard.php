@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 error_reporting(-1);
-ini_set('display_errors', 1);
+ini_set('display_errors', 'on');
 
 define('GLOBAL_TOP', isset($_GET['top']) && $_GET['top'] >= 1 ? intval($_GET['top']) : 10);
 define('GLOBAL_INTERVAL', isset($_GET['interval']) && $_GET['interval'] >= 1 ? intval($_GET['interval']) : 20);
@@ -130,7 +130,7 @@ $villes = $pdo->query('
 										<a href="?domain=<?php echo urlencode($domain); ?>"><?php echo $domain; ?></a>
 										<a href="http://<?php echo $row->domain; ?>"><img src="/admin/external-link.png"></a>
 									</td>
-									<td><?php echo number_format($row->count, 0, ',', ' '); ?></td>
+									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
 								</tr>
 								<?php
 							}
@@ -155,7 +155,7 @@ $villes = $pdo->query('
 										<a href="?ip=<?php echo $row->ip; ?>"><?php echo $row->ip; ?></a>
 										<a href="http://<?php echo $row->ip; ?>"><img src="/admin/external-link.png"></a>
 									</td>
-									<td><?php echo number_format($row->count, 0, ',', ' '); ?></td>
+									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
 								</tr>
 								<?php
 							}
@@ -179,7 +179,7 @@ $villes = $pdo->query('
 								?>
 								<tr>
 									<td><a href="?code=<?php echo $row->code; ?>"><?php echo $row->code; ?></a></td>
-									<td><?php echo number_format($row->count, 0, ',', ' '); ?></td>
+									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
 								</tr>
 								<?php
 							}
@@ -201,7 +201,7 @@ $villes = $pdo->query('
 								?>
 								<tr>
 									<td><a href="?ville=<?php echo $row->ville; ?>"><?php echo $row->ville; ?></a></td>
-									<td><?php echo number_format($row->count, 0, ',', ' '); ?></td>
+									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
 								</tr>
 								<?php
 							}
