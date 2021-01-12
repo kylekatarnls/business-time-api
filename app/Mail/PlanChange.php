@@ -10,19 +10,17 @@ final class PlanChange extends Mailable
 {
     use Queueable, SerializesModels;
 
-    private ?string $initialSubject;
-
     /**
      * Create a new message instance.
      *
      * @param array{content: string, properties?: string[]} $data
+     * @param string|null $initialSubject
      *
      * @return void
      */
-    public function __construct(array $data, ?string $subject = null)
+    public function __construct(array $data, private ?string $initialSubject = null)
     {
         $this->viewData = $data;
-        $this->initialSubject = $subject;
     }
 
     /**

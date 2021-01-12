@@ -11,14 +11,12 @@ final class AdminError extends Mailable
 {
     use Queueable, SerializesModels;
 
-    private array $data;
-
     /**
      * Create a new message instance.
      *
-     * @return void
+     * @param array $data
      */
-    public function __construct(array $data)
+    public function __construct(private array $data)
     {
         $data['exceptions'] = array_map(static fn(Throwable $exception) => (object) [
             'message' => $exception->getMessage(),
@@ -26,7 +24,6 @@ final class AdminError extends Mailable
             'line' => $exception->getLine(),
             'stack' => $exception->getTraceAsString(),
         ], $data['exceptions']);
-        $this->data = $data;
     }
 
     /**
