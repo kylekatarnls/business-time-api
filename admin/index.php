@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (empty($_SERVER['HTTPS']) && (getallheaders()['X-Forwarded-Proto'] ?? null) !== 'https') {
 	header('Location: https://vicopo.selfbuild.fr/admin/');
 	exit;

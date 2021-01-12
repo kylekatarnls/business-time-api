@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 error_reporting(-1);
 ini_set('display_errors', 1);
 
@@ -50,6 +52,7 @@ $data = $pdo->query('
 		ON l.`day` = DATE(d.`date`)
 		AND ' . GLOBAL_WHERE . '
 	GROUP BY l.`day`
+	ORDER BY d.`date`
 	LIMIT ' . GLOBAL_INTERVAL
 )->fetchAll(PDO::FETCH_NUM);
 
