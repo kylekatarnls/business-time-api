@@ -95,7 +95,7 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
         $blockage = reset($blockages);
 
         if ($config['app']['grace']['enabled'] ?? true) {
-            $file = __DIR__."/data/properties-grace/$blockage.txt";
+            $file = __DIR__."/../../data/properties-grace/$blockage.txt";
 
             if (file_exists($file)) {
                 $graceStarted = true;
