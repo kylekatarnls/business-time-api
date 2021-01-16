@@ -91,11 +91,9 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
     $graceDuration = ($config['app']['grace']['days'] ?? 7) * 24 * 3600;
     $graceProrate = 0;
 
-    if (!($config['app']['free_unlimited'] ?? true) && count($blockages)) {
-        $blockage = reset($blockages);
-
+    if (!($config['app']['free_unlimited'] ?? true) && $blocked) {
         if ($config['app']['grace']['enabled'] ?? true) {
-            $file = __DIR__."/../../data/properties-grace/$blockage.txt";
+            $file = __DIR__."/../../data/properties-grace/$property.txt";
 
             if (file_exists($file)) {
                 $graceStarted = true;
