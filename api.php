@@ -58,6 +58,7 @@ try {
         define('DOMAIN', preg_split('#[/:]#', preg_replace('`^[a-zA-Z0-9]+://`', '', REFERER))[0]);
 
         if (isset($_GET['search']) && !isset($_GET['city'], $_GET['code'])) {
+            $_GET['search'] = preg_replace('`^(?:la|le|les)\s+(\d+)$`', '$1', $_GET['search']);
             $key = preg_match('`^\d+$`', $_GET['search']) ? 'code' : 'city';
             $_GET[$key] = $_GET['search'];
         }
