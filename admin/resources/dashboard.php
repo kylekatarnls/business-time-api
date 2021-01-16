@@ -136,6 +136,24 @@ $villes = $pdo->query('
 							}
 							?>
 						</table>
+                        <?php
+                        if (isset($_GET['domain']) && $_GET['domain'] !== EMPTY_STRING) {
+                            require_once __DIR__ . '/../../vendor/autoload.php';
+                            require_once __DIR__ . '/../utils/adminDate.php';
+                            require_once __DIR__ . '/../utils/getQuotaMax.php';
+                            $quotaData = getQuotaMax($pdo, 'domain', $_GET['domain']);
+                            $quotaData['ip'] = gethostbyname($_GET['domain']);
+
+                            echo '<ul>';
+
+                            foreach ($quotaData as $key => $value) {
+                                echo '<li>' . strtolower(preg_replace('/[A-Z]/', ' $0', $key)) .
+                                    ': <strong>' . $value . '</strong></li>';
+                            }
+
+                            echo '</ul>';
+                        }
+                        ?>
 					</div>
 				</div>
 			</div>
@@ -161,6 +179,24 @@ $villes = $pdo->query('
 							}
 							?>
 						</table>
+                        <?php
+                        if (!empty($_GET['ip'])) {
+                            require_once __DIR__ . '/../../vendor/autoload.php';
+                            require_once __DIR__ . '/../utils/adminDate.php';
+                            require_once __DIR__ . '/../utils/getQuotaMax.php';
+                            $quotaData = getQuotaMax($pdo, 'ip', $_GET['ip']);
+                            $quotaData['host'] = gethostbyaddr($_GET['ip']);
+
+                            echo '<ul>';
+
+                            foreach ($quotaData as $key => $value) {
+                                echo '<li>' . strtolower(preg_replace('/[A-Z]/', ' $0', $key)) .
+                                    ': <strong>' . $value . '</strong></li>';
+                            }
+
+                            echo '</ul>';
+                        }
+                        ?>
 					</div>
 				</div>
 			</div>
