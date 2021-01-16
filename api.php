@@ -282,7 +282,8 @@ try {
                         touch($file);
                         $grace = true;
                     } else {
-                        $grace = time() - filemtime($file) < ($config['app']['grace']['days'] ?? 7) * 24 * 3600;
+                        $grace = in_array($blockage, $config['app']['grace']['unlimited'])
+                            || time() - filemtime($file) < ($config['app']['grace']['days'] ?? 7) * 24 * 3600;
                     }
                 }
 
