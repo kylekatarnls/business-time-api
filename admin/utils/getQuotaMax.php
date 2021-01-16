@@ -9,15 +9,10 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
 
     $counted = false;
     $quotaMax = 1000;
-    $blockedRequests = (int) @file_get_contents(
-        __DIR__.'/data/date-count/'.adminDate($config, '\yY/\mn/').$property.'-blocked.txt',
-    );
-    $paidRequests = (int) @file_get_contents(
-        __DIR__.'/data/date-count/'.adminDate($config, '\yY/\mn/').$property.'-paid.txt',
-    );
-
-    $file = __DIR__.'/../../data/date-count/'.adminDate($config, '\yY/\mn/').$property.'.txt';
-    $count = (int) @file_get_contents($file);
+    $directory = __DIR__.'/../../data/date-count/'.adminDate($config, '\yY/\mn/');
+    $blockedRequests = (int) @file_get_contents($directory.$property.'-blocked.txt');
+    $paidRequests = (int) @file_get_contents($directory.$property.'-paid.txt');
+    $count = (int) @file_get_contents($directory.$property.'.txt');
     $quotaReached = false;
     $userId = null;
     $tld = $type === 'domain' && preg_match('/^(?:.+)?\.([^.]+\.[a-z]+)$/', $property, $match)
@@ -92,17 +87,16 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
 
     $graceStarted = false;
     $graceEnded = false;
-    $graceStartedAt = time();
+    $graceStartedAt = null;
     $graceDuration = ($config['app']['grace']['days'] ?? 7) * 24 * 3600;
     $graceProrate = 0;
 
     if (!($config['app']['free_unlimited'] ?? true) && $blocked) {
         if ($config['app']['grace']['enabled'] ?? true) {
-            $file = __DIR__."/../../data/properties-grace/$property.txt";
+            $graceStartedAt = @filemtime(__DIR__."/../../data/properties-grace/$property.txt");
 
-            if (file_exists($file)) {
+            if ($graceStartedAt) {
                 $graceStarted = true;
-                $graceStartedAt = filemtime($file);
                 $grace = time() - $graceStartedAt < $graceDuration;
                 $graceEnded = !$grace;
                 $graceProrate = (time() - $graceStartedAt) / $graceDuration;
