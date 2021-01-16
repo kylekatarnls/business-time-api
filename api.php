@@ -238,34 +238,34 @@ try {
                         }
                     }
 
-                    $fileUpdates = [[$file, $count + 1]];
+                    $fileUpdates = [$file];
 
                     $blocked = $quotaReached && !$counted;
 
                     if ($blocked) {
                         $blockages[] = $property;
-                        $fileUpdates[] = [substr($file, 0, -4).'-blocked.txt', null];
+                        $fileUpdates[] = substr($file, 0, -4).'-blocked.txt';
                     }
 
                     if ($paid) {
-                        $fileUpdates[] = [substr($file, 0, -4).'-paid.txt', null];
+                        $fileUpdates[] = substr($file, 0, -4).'-paid.txt';
                     }
 
                     if ($tld) {
                         $file = __DIR__.'/data/date-count/'.adminDate($config, '\yY/\mn/').$tld.'.txt';
-                        $fileUpdates[] = [$file, null];
+                        $fileUpdates[] = $file;
 
                         if ($blocked) {
-                            $fileUpdates[] = [substr($file, 0, -4).'-blocked.txt', null];
+                            $fileUpdates[] = substr($file, 0, -4).'-blocked.txt';
                         }
 
                         if ($paid) {
-                            $fileUpdates[] = [substr($file, 0, -4).'-paid.txt', null];
+                            $fileUpdates[] = substr($file, 0, -4).'-paid.txt';
                         }
                     }
 
-                    foreach ($fileUpdates as [$file, $count]) {
-                        @file_put_contents($file, $count ?? (((int) @file_get_contents($file)) + 1));
+                    foreach ($fileUpdates as $file) {
+                        @file_put_contents($file, ((int) @file_get_contents($file)) + 1);
                     }
                 }
             }

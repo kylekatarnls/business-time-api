@@ -8,8 +8,13 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
     }
 
     $counted = false;
-    $blockages = [];
     $quotaMax = 1000;
+    $blockedRequests = (int) @file_get_contents(
+        __DIR__.'/data/date-count/'.adminDate($config, '\yY/\mn/').$property.'-blocked.txt',
+    );
+    $paidRequests = (int) @file_get_contents(
+        __DIR__.'/data/date-count/'.adminDate($config, '\yY/\mn/').$property.'-paid.txt',
+    );
 
     $file = __DIR__.'/../../data/date-count/'.adminDate($config, '\yY/\mn/').$property.'.txt';
     $count = (int) @file_get_contents($file);
@@ -111,6 +116,8 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
         'quota' => json_encode($quotaMax),
         'quotaReached' => json_encode($quotaReached),
         'blocked' => json_encode($blocked),
+        'blockedRequests' => json_encode($blockedRequests),
+        'paidRequests' => json_encode($paidRequests),
         'graceStarted' => json_encode($graceStarted),
         'graceEnded' => json_encode($graceEnded),
         'graceStartedAt' => $graceStarted ? date('Y-m-d H:i:s', $graceStartedAt) : 'null',
