@@ -232,7 +232,10 @@ try {
                                 if (!$quotaReached) {
                                     $counted = true;
                                     $paid = true;
-                                    @file_put_contents($subscriptionFile, $subscriptionCount);
+
+                                    if (!file_exists($subscriptionFile) || $subscriptionCount > 1) {
+                                        @file_put_contents($subscriptionFile, $subscriptionCount);
+                                    }
                                 }
                             }
                         }
@@ -265,7 +268,17 @@ try {
                     }
 
                     foreach ($fileUpdates as $file) {
-                        @file_put_contents($file, ((int) @file_get_contents($file)) + 1);
+                        if (!file_exists($file)) {
+                            @file_put_contents($file, '1');
+
+                            continue;
+                        }
+
+                        $count = (int) @file_get_contents($file);
+
+                        if ($count) {
+                            @file_put_contents($file, $count + 1);
+                        }
                     }
                 }
             }
