@@ -217,6 +217,16 @@ final class User extends Authenticatable
     {
         $stripeRefund = $this->billableRefund($paymentIntent, $options);
 
+        $this->refunds()->save(new Refund([
+            'cents_amount' => $stripeRefund->amount,
+            'stripe_refund_id' => $stripeRefund->id,
+            'payment_intent' => $stripeRefund->payment_intent,
+            'balance_transaction' => $stripeRefund->balance_transaction,
+            'charge' => $stripeRefund->charge,
+            'status' => $stripeRefund->status,
+            'currency' => $stripeRefund->currency,
+        ]));
+
         return $stripeRefund;
     }
 
