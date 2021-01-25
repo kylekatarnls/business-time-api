@@ -34,7 +34,11 @@ final class RefundTest extends TestCase
             $ziggy->getActiveSubscription()->items->data[0]->plan['product'],
         );
 
-        // Reload user
+        /**
+         * Reload user.
+         *
+         * @var User $ziggy
+         */
         $ziggy = User::find($ziggy->id);
 
         $ziggy->refundUntil(1.50);
