@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Util;
 
 use App\Util\Number;
 use Tests\TestCase;

@@ -295,6 +295,9 @@ class Controller extends AbstractController
 
     public function doSubscribePlan(User $user, Store $store, array $data): RedirectResponse|View
     {
+        $user->last_subscribe_at = now();
+        $user->save();
+
         $plans = $this->getPlans();
         [
             'planId' => $planId,
@@ -547,10 +550,7 @@ class Controller extends AbstractController
 //            return $activeSubscription->swap($planId);
 //        }
 
-        return $user->newSubscription($planId, $planOffer)->create(
-            $paymentMethod,
-            ['email' => $user->email],
-        );
+        return $user->subscribe($planId, $planOffer, $paymentMethod);
     }
 
     private function prefillDashboardAuthorization(array $types, Store $session): void
@@ -664,6 +664,11 @@ class Controller extends AbstractController
         $sessions = $this->getStripeClient()->checkout->sessions;
         $plans = Plan::getPlansData();
         $keys = array_keys($plans);
+        $user = $this->getUser();
+
+        if ($user && !$user->hasStripeId()) {
+            $user->createAsStripeCustomer();
+        }
 
         return array_combine($keys, array_map(fn(string $key, Plan $data) => $data->with([
             'key'           => $key,
@@ -681,6 +686,7 @@ class Controller extends AbstractController
                 'mode'                 => 'payment',
                 'success_url'          => route('subscribe-plan', ['plan' => $key]),
                 'cancel_url'           => route('subscribe-cancel', ['plan' => $key]),
+                'customer'             => $user?->stripeId(),
                 'payment_method_types' => ['card'],
                 'line_items'           => [
                     [

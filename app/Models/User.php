@@ -29,6 +29,9 @@ use Throwable;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon $deleted_at
+ * @property Carbon $last_subscribe_at
+ * @property Carbon $email_verified_at
  * @property Collection<ApiAuthorization> apiAuthorizations
  * @property Collection<Refund> refunds
  * @property Collection<CashierSubscription> $subscriptions
@@ -54,6 +57,7 @@ final class User extends Authenticatable
         'name',
         'email',
         'password',
+        'last_subscribe_at',
     ];
 
     /**
@@ -75,6 +79,7 @@ final class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_subscribe_at' => 'datetime',
     ];
 
     /**
@@ -344,5 +349,23 @@ final class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->email === config('app.super_admin');
+    }
+
+    public function subscribe(string $planId, string $planOffer, ?string $paymentMethod = null): CashierSubscription
+    {
+        return $this->newSubscription($planId, $planOffer)->create(
+            $paymentMethod ?? $this->defaultPaymentMethod()?->id,
+            ['email' => $this->email],
+        );
+    }
+
+    public function subscribePlan(string $planId, string $recurrence, ?string $paymentMethod = null): CashierSubscription
+    {
+        return $this->subscribe($planId, config("plan.$planId.price.$recurrence"), $paymentMethod);
+    }
+
+    public function hasBilling(): bool
+    {
+        return $this->last_subscribe_at && $this->hasStripeId();
     }
 }

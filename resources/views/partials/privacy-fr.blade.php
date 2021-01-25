@@ -37,22 +37,26 @@
     sont envoyés. Si les cookies sont désactivés certaines fonctionnalités du Site peuvent toutefois ne pas
     fonctionner correctement.
 </p>
-<h2 class="text-lg font-bold">How we use collected information</h2>
+<h2 class="text-lg font-bold">Comment nous utilisons les informations collectées</h2>
 <p class="my-6">
-    {{ $appName }} may collect and use Users personal information for the following purposes:
-    To improve customer service - Information you provide helps us respond to your customer service
-    requests and support needs more efficiently.
-    To personalize user experience - We may use information in the aggregate to understand how our Users
-    as a group use the services and resources provided on our Site.
-    To improve our Site - We may use feedback you provide to improve our products and services.
-    To process payments - We may use the information Users provide about themselves when placing an order
-    only to provide service to that order. We do not share this information with outside parties except to
-    the extent necessary to provide the service.
-    To send periodic emails - We may use the email address to send User information and updates pertaining
-    to their order. It may also be used to respond to their inquiries, questions, and/or other requests.
-    If User decides to opt-in to our mailing list, they will receive emails that may include company news,
-    updates, related product or service information, etc. If at any time the User would like to
-    unsubscribe from receiving future emails, they may do so by contacting us via our Site.
+    {{ $appName }} peut collecter et utiliser les informations personnelles des utilisateurs pour les
+    raisons suivantes&nbsp;:<br />
+    Améliorer le service client - Les informations que vous nous fournissez nous aident à répondre
+    à vos requêtes au service client et les besoins de support plus efficacement.<br />
+    Personnaliser l'expérience utilisateur - Nous pouvons utiliser les informations aggrégées pour comprendre
+    comment nos utilisateurs en tant que groupe utilisent les services et ressources forurnie par notre Site.<br />
+    Améliorer notre Site - Nous pouvons utiliser les retours d'information que vous fournissez pour améliorer
+    nos produits et services.<br />
+    Pour effectuer les paiements - Nous pouvons utiliser les informations que les Utilisateurs fournissent à
+    propos d'eux-mêmes lorsqu'ils souscrivent à un abonnement ou procèdent à une commande exclusivement
+    pour fournir le service souscrit. Nous ne partageons pas ces informations à des parties externes.<br />
+    La partie bancaire est déléguée à <em>Stripe</em> dont les règles de confidentialités et conditions générales
+    sont accessible à <a href="https://stripe.com/fr/privacy">https://stripe.com/fr/privacy</a>
+    Pour envoyer des e-mails - Nous pouvons utiliser l'adresse e-mail pour vous notifier des informations
+    telles que le dépassement d'un quota pour une de vos propriété vérifiée. Elle peut aussi être utilisée
+    pour répondre à une communication initiée par l'Utilisateur.
+    Si à n'importe quel moment l'Utilisateur ne souhaite plus recevoir d'email, il peut nous le signifier
+    via <a href="{{ route('contact') }}">notre page de contact</a>.
 </p>
 <h2 class="text-lg font-bold">How we protect your information</h2>
 <p class="my-6">

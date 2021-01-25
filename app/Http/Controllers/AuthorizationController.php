@@ -20,7 +20,7 @@ final class AuthorizationController extends AbstractController
     {
         $types = config('app.authorizations');
         $type = count($types) === 1 ? reset($types) : $request->get('type');
-        $value = $request->get($type) ?? '';
+        $value = rtrim(preg_replace('`^https?://`', '', trim($request->get($type) ?? '')), '/');
 
         if (!AuthorizationFactory::fromType($type)->accept($value)) {
             return redirect('dashboard')

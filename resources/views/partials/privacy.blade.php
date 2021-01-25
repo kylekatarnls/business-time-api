@@ -46,10 +46,11 @@
     To process payments - We may use the information Users provide about themselves when placing an order
     only to provide service to that order. We do not share this information with outside parties except to
     the extent necessary to provide the service.
+    Bank service is provided by <em>Stripe</em>, which privacy policy can be viewed on
+    <a href="https://stripe.com/fr/privacy">https://stripe.com/fr/privacy</a>.
     To send periodic emails - We may use the email address to send User information and updates pertaining
     to their order. It may also be used to respond to their inquiries, questions, and/or other requests.
-    If User decides to opt-in to our mailing list, they will receive emails that may include company news,
-    updates, related product or service information, etc. If at any time the User would like to
+    If at any time the User would like to
     unsubscribe from receiving future emails, they may do so by contacting us via our Site.
 </p>
 <h2 class="text-lg font-bold">How we protect your information</h2>

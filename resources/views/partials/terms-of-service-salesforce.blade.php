@@ -25,8 +25,8 @@
                                 suspension or discontinuance of the Service.</p>
                             <h2>2. {{ $appName }} PRIVACY POLICY</h2>
                             <p>Registration data and certain other information about you is subject to our Privacy
-                                Policy. For more information, please see our complete privacy policy at <a
-                                    href="/privacy">/privacy</a>.</p>
+                                Policy. For more information, please <a
+                                    href="{{ route('privacy') }}">see our complete privacy policy</a>.</p>
                             <h2>3. MEMBER ACCOUNT, PASSWORD, AND SECURITY</h2>
                             <p>If you choose to register with us, you will choose a password and account ID. You and you
                                 alone are solely responsible for maintaining the confidentiality of your password and

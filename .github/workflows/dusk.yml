@@ -89,6 +89,8 @@ jobs:
           chmod -R 777 storage bootstrap/cache
           php artisan key:generate
           php artisan config:clear
+          php artisan config:cache
+          php artisan directories
         env:
           PHP_VERSION: ${{ matrix.php }}
           STRIPE_KEY: ${{ secrets.STRIPE_KEY }}

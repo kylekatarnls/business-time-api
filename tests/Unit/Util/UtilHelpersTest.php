@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Util;
 
 use PHPUnit\Framework\TestCase;
 use function App\Util\integerOrInfinity;

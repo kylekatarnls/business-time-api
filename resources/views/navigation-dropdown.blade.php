@@ -28,7 +28,7 @@
                         </x-jet-nav-link>
                     @endif
 
-                    @if(Auth::user()?->hasStripeId())
+                    @if(Auth::user()?->hasBilling())
                         <x-jet-nav-link href="{{ route('billing') }}" :active="request()->routeIs('billing')">
                             {{ __('Billing') }}
                         </x-jet-nav-link>
@@ -175,7 +175,7 @@
                 </x-jet-responsive-nav-link>
             @endif
 
-            @if(Auth::user()?->hasStripeId())
+            @if(Auth::user()?->hasBilling())
                 <x-jet-responsive-nav-link href="{{ route('billing') }}" :active="request()->routeIs('billing')">
                     {{ __('Billing') }}
                 </x-jet-responsive-nav-link>
