@@ -172,7 +172,7 @@ final class ApiAuthorization extends Model
 
     private function retrieveCount(string $suffix = ''): ?int
     {
-        if (!$this->verified_at || !$this->accept($this->value)) {
+        if (!$this->verified_at) {
             return null;
         }
 

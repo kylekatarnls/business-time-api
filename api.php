@@ -186,15 +186,15 @@ try {
                             }
 
                             $query = $GLOBALS['pdo']->prepare("
-                            SELECT s.*, a.*,
-                                   s.`id` AS `subscription_id`,
-                                   s.`created_at` AS `subscribed_at`,
-                                   s.`updated_at` AS `refreshed_at`,
-                                   s.`name` AS `plan`
-                            FROM `api_authorizations` as a
-                            LEFT JOIN `subscriptions` AS s ON s.user_id = a.user_id AND s.stripe_status = 'active'
-                            WHERE `type` = :type AND (`value` = :property$tldClause)
-                        ");
+                                SELECT s.*, a.*,
+                                       s.`id` AS `subscription_id`,
+                                       s.`created_at` AS `subscribed_at`,
+                                       s.`updated_at` AS `refreshed_at`,
+                                       s.`name` AS `plan`
+                                FROM `api_authorizations` as a
+                                LEFT JOIN `subscriptions` AS s ON s.user_id = a.user_id AND s.stripe_status = 'active'
+                                WHERE `type` = :type AND (`value` = :property$tldClause)
+                            ");
                             $query->execute($queryParams);
                             $subscription = $query->fetch(PDO::FETCH_OBJ);
 
