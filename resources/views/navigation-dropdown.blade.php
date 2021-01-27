@@ -88,6 +88,10 @@
                             <x-jet-dropdown-link href="{{ route('admin-errors') }}" target="_blank">
                                 {{ __('Errors') }}
                             </x-jet-dropdown-link>
+
+                            <x-jet-dropdown-link href="https://{{ config('analytics.host') }}/index.php?module=CoreHome&action=index&idSite={{ config('analytics.id') }}&period=range&date=last30&updated=1#?idSite={{ config('analytics.id') }}&period=range&date=last30&category=Dashboard_Dashboard&subcategory=1" target="_blank">
+                                {{ __('Analytics') }}
+                            </x-jet-dropdown-link>
                         @endif
 
                         @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
@@ -221,6 +225,10 @@
                     <x-jet-responsive-nav-link href="{{ route('admin-errors') }}" target="_blank">
                         {{ __('Errors') }}
                     </x-jet-responsive-nav-link>
+
+                    <x-jet-dropdown-link href="https://{{ config('analytics.host') }}/index.php?module=CoreHome&action=index&idSite={{ config('analytics.id') }}&period=range&date=last30&updated=1#?idSite={{ config('analytics.id') }}&period=range&date=last30&category=Dashboard_Dashboard&subcategory=1" target="_blank">
+                        {{ __('Analytics') }}
+                    </x-jet-dropdown-link>
                 @endif
 
                 @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
