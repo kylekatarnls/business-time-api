@@ -22,14 +22,14 @@
             _paq.push(['trackPageView']);
             _paq.push(['enableLinkTracking']);
             (function() {
-                var u="//piwik.selfbuild.fr/";
+                var u="//{{ config('analytics.host') }}/";
                 _paq.push(['setTrackerUrl', u+'matomo.php']);
-                _paq.push(['setSiteId', '24']);
+                _paq.push(['setSiteId', '{{ config('analytics.id') }}']);
                 var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
                 g.type='text/javascript'; g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
             })();
         </script>
-        <noscript><p><img src="//piwik.selfbuild.fr/matomo.php?idsite=24&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+        <noscript><p><img src="//{{ config('analytics.host') }}/matomo.php?idsite={{ config('analytics.id') }}&amp;rec=1" style="border:0;" alt="" /></p></noscript>
     </head>
     <body>
         <div class="font-sans text-gray-900 antialiased">

@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(static function () {
     Route::get('/increase-limit/{ipOrDomain}', [Controller::class, 'increaseLimit'])->name('increase-limit');
     Route::get('/home', [Controller::class, 'home'])->name('home');
     Route::get('/dashboard', [Controller::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/{userId}', [Controller::class, 'dashboard'])->name('user-dashboard');
     Route::post('/authorization', [AuthorizationController::class, 'create'])->name('add-authorization');
     Route::delete('/authorization', [AuthorizationController::class, 'delete'])->name('remove-authorization');
     Route::get('/authorization/verification-file/{ipOrDomain}', [AuthorizationController::class, 'getVerifyToken'])->name('authorization-verification');

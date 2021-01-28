@@ -217,6 +217,8 @@ final class User extends Authenticatable
     {
         $stripeRefund = $this->billableRefund($paymentIntent, $options);
 
+        $this->addRefund($stripeRefund);
+
         return $stripeRefund;
     }
 

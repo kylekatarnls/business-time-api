@@ -209,12 +209,12 @@ try {
                             if (!$counted && $count >= $limit) {
                                 $userId = (int) $subscription->user_id;
                                 $quota = match ($subscription->plan) {
-                                    'start' => $config['plan']['guest']['limit'] ?? 20000,
+                                    'start' => $config['plan']['start']['limit'] ?? 20000,
                                     'pro' => $config['plan']['pro']['limit'] ?? 200000,
                                     'premium' => $config['plan']['premium']['limit'] ?? INF,
                                     default => $config['plan']['pro']['limit'] ?? 20000,
                                 };
-                                $quotaMax = max($quotaMax, $quota);
+                                $quotaMax = max($quotaMax, $quota) * ($config['app']['quota_factor'][$userId] ?? 1);
                                 $date = new DateTimeImmutable($subscription->subscribed_at);
                                 $diff = $date->diff(new DateTimeImmutable());
                                 $month = $diff->y * 12 + $diff->m;
@@ -243,7 +243,7 @@ try {
 
                     $fileUpdates = [$file];
 
-                    $blocked = $quotaReached && !$counted;
+                    $blocked = !$paid && $quotaReached && !$counted;
 
                     if ($blocked) {
                         $blockages[] = $property;

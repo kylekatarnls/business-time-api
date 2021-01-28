@@ -160,6 +160,10 @@ return [
         return $limits;
     })(env('SPECIAL_LIMIT')),
 
+    'quota_factor' => [
+        10 => 3,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

@@ -8,6 +8,10 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
+                @if($onBehalf)
+                    <div><a href="{{ route('admin-users') }}">{{ __('Users') }}</a></div>
+                @endif
+
                 @foreach($errors as $error)
                     <div class="px-6 py-4 mb-6 bg-red-300 border-red-500">
                         {{ $error }}
@@ -60,7 +64,7 @@
                                     <span class="py-1 px-3 mr-2 bg-green-700 text-white text-sm rounded-lg">{{ $plan['name'] }}</span>
                                     {{ __('Total paid requests: :requests / :limit', [
                                         'requests' => Number::format($paidRequests),
-                                        'limit' => Number::format($plan['limit']),
+                                        'limit' => Number::format($limit),
                                     ]) }}
                                 </p>
                                 <div class="mt-2 p-1 bg-gray-100 border-2">
@@ -89,7 +93,7 @@
                             <p class="my-4">
                                 {{ __('Your :plan subscription allow you :requests more requests per month shared among your properties.', [
                                     'plan' => $plan['name'],
-                                    'requests' => Number::format($plan['limit']),
+                                    'requests' => Number::format($limit),
                                 ]) }}
                             </p>
                         @else
@@ -178,71 +182,73 @@
 
                                             <td class="border px-4 py-2">
                                                 <div class="flex">
-                                                    @if($authorization->isVerified())
-                                                        <x-jet-dropdown align="right" width="48">
-                                                            <x-slot name="trigger">
-                                                                <x-jet-secondary-button class="mr-4">
-                                                                    <div>{{ __('Options') }}</div>
+                                                    @unless($onBehalf)
+                                                        @if($authorization->isVerified())
+                                                            <x-jet-dropdown align="right" width="48">
+                                                                <x-slot name="trigger">
+                                                                    <x-jet-secondary-button class="mr-4">
+                                                                        <div>{{ __('Options') }}</div>
 
-                                                                    <div class="ml-1">
-                                                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                                                        </svg>
-                                                                    </div>
-                                                                </x-jet-secondary-button>
-                                                            </x-slot>
+                                                                        <div class="ml-1">
+                                                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    </x-jet-secondary-button>
+                                                                </x-slot>
 
-                                                            <x-slot name="content">
-                                                                <x-jet-dropdown-link href="{{ route('exonerate', ['properties' => $authorization->value]) }}">
-                                                                    {{ __('Exonerate') }}
-                                                                </x-jet-dropdown-link>
-                                                            </x-slot>
-                                                        </x-jet-dropdown>
-                                                    @endif
+                                                                <x-slot name="content">
+                                                                    <x-jet-dropdown-link href="{{ route('exonerate', ['properties' => $authorization->value]) }}">
+                                                                        {{ __('Exonerate') }}
+                                                                    </x-jet-dropdown-link>
+                                                                </x-slot>
+                                                            </x-jet-dropdown>
+                                                        @endif
 
-                                                    <form method="POST" action="{{ route('remove-authorization') }}">
-                                                        @csrf
+                                                        <form method="POST" action="{{ route('remove-authorization') }}">
+                                                            @csrf
 
-                                                        <input type="hidden" name="_method" value="delete" />
-                                                        <input type="hidden" name="value" value="{{ $authorization->value }}" />
+                                                            <input type="hidden" name="_method" value="delete" />
+                                                            <input type="hidden" name="value" value="{{ $authorization->value }}" />
 
-                                                        <x-jet-secondary-button
-                                                            type="submit"
-                                                            onclick="if (!confirm('{{ __('Remove property :property', ['property' => $authorization->value]) }}')) { event.preventDefault(); event.stopPropagation(); return false; }"
-                                                            {{-- wire:click="$toggle('confirmingPropertyDeletion{{ $authorization->id }}')" --}}
-                                                            title="{{ __('Remove') }}"
-                                                            aria-label="{{ __('Remove') }}"
-                                                            class="text-red-800 hover:bg-red-500 hover:text-white active:bg-red-900 focus:border-red-900"
-                                                        >
-                                                            <svg class="fill-current" style="margin: -3px;" height="24" viewBox="0 0 48 48" width="24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M0 0h48v48H0V0z" fill="none"/>
-                                                                <path d="M12 38c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V14H12v24zm4.93-14.24l2.83-2.83L24 25.17l4.24-4.24 2.83 2.83L26.83 28l4.24 4.24-2.83 2.83L24 30.83l-4.24 4.24-2.83-2.83L21.17 28l-4.24-4.24zM31 8l-2-2H19l-2 2h-7v4h28V8z"/>
-                                                                <path d="M0 0h48v48H0z" fill="none"/>
-                                                            </svg>
-                                                        </x-jet-secondary-button>
+                                                            <x-jet-secondary-button
+                                                                type="submit"
+                                                                onclick="if (!confirm('{{ __('Remove property :property', ['property' => $authorization->value]) }}')) { event.preventDefault(); event.stopPropagation(); return false; }"
+                                                                {{-- wire:click="$toggle('confirmingPropertyDeletion{{ $authorization->id }}')" --}}
+                                                                title="{{ __('Remove') }}"
+                                                                aria-label="{{ __('Remove') }}"
+                                                                class="text-red-800 hover:bg-red-500 hover:text-white active:bg-red-900 focus:border-red-900"
+                                                            >
+                                                                <svg class="fill-current" style="margin: -3px;" height="24" viewBox="0 0 48 48" width="24" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M0 0h48v48H0V0z" fill="none"/>
+                                                                    <path d="M12 38c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4V14H12v24zm4.93-14.24l2.83-2.83L24 25.17l4.24-4.24 2.83 2.83L26.83 28l4.24 4.24-2.83 2.83L24 30.83l-4.24 4.24-2.83-2.83L21.17 28l-4.24-4.24zM31 8l-2-2H19l-2 2h-7v4h28V8z"/>
+                                                                    <path d="M0 0h48v48H0z" fill="none"/>
+                                                                </svg>
+                                                            </x-jet-secondary-button>
 
-                                                        {{--
-                                                        <x-jet-confirmation-modal wire:model="confirmingPropertyDeletion{{ $authorization->id }}">
-                                                            <x-slot name="title">
-                                                                {{ __('Remove property :property', ['property' => $authorization->value]) }}
-                                                            </x-slot>
+                                                            {{--
+                                                            <x-jet-confirmation-modal wire:model="confirmingPropertyDeletion{{ $authorization->id }}">
+                                                                <x-slot name="title">
+                                                                    {{ __('Remove property :property', ['property' => $authorization->value]) }}
+                                                                </x-slot>
 
-                                                            <x-slot name="content">
-                                                                {{ __('Are you sure you want to delete this property?') }}
-                                                            </x-slot>
+                                                                <x-slot name="content">
+                                                                    {{ __('Are you sure you want to delete this property?') }}
+                                                                </x-slot>
 
-                                                            <x-slot name="footer">
-                                                                <x-jet-secondary-button wire:click="$toggle('confirmingPropertyDeletion{{ $authorization->id }}')" wire:loading.attr="disabled">
-                                                                    {{ __('Keep') }}
-                                                                </x-jet-secondary-button>
+                                                                <x-slot name="footer">
+                                                                    <x-jet-secondary-button wire:click="$toggle('confirmingPropertyDeletion{{ $authorization->id }}')" wire:loading.attr="disabled">
+                                                                        {{ __('Keep') }}
+                                                                    </x-jet-secondary-button>
 
-                                                                <x-jet-danger-button class="ml-2" type="submit" wire:loading.attr="disabled">
-                                                                    {{ __('Remove') }}
-                                                                </x-jet-danger-button>
-                                                            </x-slot>
-                                                        </x-jet-confirmation-modal>
-                                                        --}}
-                                                    </form>
+                                                                    <x-jet-danger-button class="ml-2" type="submit" wire:loading.attr="disabled">
+                                                                        {{ __('Remove') }}
+                                                                    </x-jet-danger-button>
+                                                                </x-slot>
+                                                            </x-jet-confirmation-modal>
+                                                            --}}
+                                                        </form>
+                                                    @endunless
                                                 </div>
                                             </td>
                                         </tr>
@@ -258,94 +264,96 @@
                     </p>
                 @endif
 
-                <form method="POST" action="{{ route('add-authorization') }}">
-                    @csrf
+                @unless($onBehalf)
+                    <form method="POST" action="{{ route('add-authorization') }}">
+                        @csrf
 
-                    <div>
-                        <x-jet-label for="name" value="{{ __('Name') }}" />
-                        <x-jet-input
-                            id="name"
-                            class="block mt-1 w-full"
-                            type="text"
-                            name="name"
-                            :value="$name"
-                            :autofocus="!$authorizationsCount && !old('name')"
-                            required
-                        />
-                    </div>
-
-                    @if(count($authorizations) > 1)
-                        <div class="mt-4">
-                            <div>{{ __('Type') }}</div>
-                            <div>
-                                @foreach($authorizations as $authorizationsData)
-                                    <label>
-                                        <input type="radio" name="type" value="{{ $authorizationsData->type }}" {!! $type === $authorizationsData->type || (($authorizationsData->default ?? false) && !$type) ? 'checked' : '' !!} />
-                                        {{ $authorizationsData->name }}
-                                    </label>
-                                    &nbsp;
-                                @endforeach
-                            </div>
-                            <div class="text-gray-400">
-                                {{ __('You can use either a domain (or sub-domain) if you use VICOPO on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use VICOPO from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the "Domain" type).') }}
-                            </div>
-                        </div>
-                    @endif
-
-                    @foreach($authorizations as $authorizationsData)
-                        <div class="mt-4" data-type="{{ $authorizationsData->type }}">
-                            <x-jet-label for="{{ $authorizationsData->type }}" value="{{ $authorizationsData->name }}" />
+                        <div>
+                            <x-jet-label for="name" value="{{ __('Name') }}" />
                             <x-jet-input
-                                id="{{ $authorizationsData->type }}"
-                                class="block mt-1 w-full {{ isset($authorisationsErrors[$authorizationsData->type]) ? 'border-red-500' : '' }}"
+                                id="name"
+                                class="block mt-1 w-full"
                                 type="text"
-                                name="{{ $authorizationsData->type }}"
-                                :value="$authorizationsData->value"
+                                name="name"
+                                :value="$name"
+                                :autofocus="!$authorizationsCount && !old('name')"
                                 required
                             />
-
-                            @if(isset($authorisationsErrors[$authorizationsData->type]))
-                                @switch($authorisationsErrors[$authorizationsData->type])
-                                    @case('format')
-                                        <p class="text-red-500">{{ __('Invalid format.') }}</p>
-                                        @break
-                                    @case('duplicate')
-                                        <p class="text-red-500">{{ __('":value" is already registered.', ['value' => old($authorizationsData->type)]) }}</p>
-                                        @break
-                                    @default
-                                        <p class="text-red-500">{{ __('Unknown error.') }}</p>
-                                @endswitch
-                            @endif
-
-                            @if($authorizationsData->type === 'domain' && $subDomain && $subDomain !== $domain)
-                                <p id="use-sub-domain" class="text-sm my-2">
-                                    <a class="text-blue-700 hover:underline cursor-pointer" onclick="useSubDomain()">{!!
-                                        __('Use the :subDomain precise sub-domain (to exclude other sub-domains of the same top level domain.', [
-                                            'subDomain' => '<strong class="bold">' . htmlspecialchars($subDomain) . '</strong>',
-                                        ])
-                                    !!}</a>
-                                </p>
-                                <p id="use-tld-domain" class="text-sm my-2 hidden">
-                                    <a class="text-blue-700 hover:underline cursor-pointer" onclick="useTldDomain()">{!!
-                                        __('Use the top level domain :domain to include any sub-domain.', [
-                                            'domain' => '<strong class="bold">' . htmlspecialchars($domain) . '</strong>',
-                                        ])
-                                    !!}</a>
-                                </p>
-                            @endif
                         </div>
-                    @endforeach
 
-                    <div class="flex items-center justify-end mt-4">
-                        <x-jet-button class="ml-4">
-                            {{ __('Add authorization') }}
-                        </x-jet-button>
+                        @if(count($authorizations) > 1)
+                            <div class="mt-4">
+                                <div>{{ __('Type') }}</div>
+                                <div>
+                                    @foreach($authorizations as $authorizationsData)
+                                        <label>
+                                            <input type="radio" name="type" value="{{ $authorizationsData->type }}" {!! $type === $authorizationsData->type || (($authorizationsData->default ?? false) && !$type) ? 'checked' : '' !!} />
+                                            {{ $authorizationsData->name }}
+                                        </label>
+                                        &nbsp;
+                                    @endforeach
+                                </div>
+                                <div class="text-gray-400">
+                                    {{ __('You can use either a domain (or sub-domain) if you use VICOPO on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use VICOPO from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the "Domain" type).') }}
+                                </div>
+                            </div>
+                        @endif
+
+                        @foreach($authorizations as $authorizationsData)
+                            <div class="mt-4" data-type="{{ $authorizationsData->type }}">
+                                <x-jet-label for="{{ $authorizationsData->type }}" value="{{ $authorizationsData->name }}" />
+                                <x-jet-input
+                                    id="{{ $authorizationsData->type }}"
+                                    class="block mt-1 w-full {{ isset($authorisationsErrors[$authorizationsData->type]) ? 'border-red-500' : '' }}"
+                                    type="text"
+                                    name="{{ $authorizationsData->type }}"
+                                    :value="$authorizationsData->value"
+                                    required
+                                />
+
+                                @if(isset($authorisationsErrors[$authorizationsData->type]))
+                                    @switch($authorisationsErrors[$authorizationsData->type])
+                                        @case('format')
+                                            <p class="text-red-500">{{ __('Invalid format.') }}</p>
+                                            @break
+                                        @case('duplicate')
+                                            <p class="text-red-500">{{ __('":value" is already registered.', ['value' => old($authorizationsData->type)]) }}</p>
+                                            @break
+                                        @default
+                                            <p class="text-red-500">{{ __('Unknown error.') }}</p>
+                                    @endswitch
+                                @endif
+
+                                @if($authorizationsData->type === 'domain' && $subDomain && $subDomain !== $domain)
+                                    <p id="use-sub-domain" class="text-sm my-2">
+                                        <a class="text-blue-700 hover:underline cursor-pointer" onclick="useSubDomain()">{!!
+                                            __('Use the :subDomain precise sub-domain (to exclude other sub-domains of the same top level domain.', [
+                                                'subDomain' => '<strong class="bold">' . htmlspecialchars($subDomain) . '</strong>',
+                                            ])
+                                        !!}</a>
+                                    </p>
+                                    <p id="use-tld-domain" class="text-sm my-2 hidden">
+                                        <a class="text-blue-700 hover:underline cursor-pointer" onclick="useTldDomain()">{!!
+                                            __('Use the top level domain :domain to include any sub-domain.', [
+                                                'domain' => '<strong class="bold">' . htmlspecialchars($domain) . '</strong>',
+                                            ])
+                                        !!}</a>
+                                    </p>
+                                @endif
+                            </div>
+                        @endforeach
+
+                        <div class="flex items-center justify-end mt-4">
+                            <x-jet-button class="ml-4">
+                                {{ __('Add authorization') }}
+                            </x-jet-button>
+                        </div>
+                    </form>
+
+                    <div class="mt-6 text-sm">
+                        *{{ __('Per property counts are given from first to last month of the day midnight, Paris hours; while plan requests are counted from the subscription date and time.') }}
                     </div>
-                </form>
-
-                <div class="mt-6 text-sm">
-                    *{{ __('Per property counts are given from first to last month of the day midnight, Paris hours; while plan requests are counted from the subscription date and time.') }}
-                </div>
+                @endunless
             </div>
         </div>
 

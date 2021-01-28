@@ -39,14 +39,14 @@ function jsfiddle($code, $tabs = 'js,html,result'): void {
         _paq.push(['trackPageView']);
         _paq.push(['enableLinkTracking']);
         (function() {
-            var u="//piwik.selfbuild.fr/";
+            var u="//<?= $config['analytics']['host'] ?? 'piwik.selfbuild.fr' ?>/";
             _paq.push(['setTrackerUrl', u+'matomo.php']);
-            _paq.push(['setSiteId', '24']);
+            _paq.push(['setSiteId', '<?= $config['analytics']['id'] ?? '24' ?>']);
             var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
             g.type='text/javascript'; g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
         })();
     </script>
-    <noscript><p><img src="//piwik.selfbuild.fr/matomo.php?idsite=24&amp;rec=1" style="border:0;" alt="" /></p></noscript>
+    <noscript><p><img src="//<?= $config['analytics']['host'] ?? 'piwik.selfbuild.fr' ?>/matomo.php?idsite=<?= $config['analytics']['id'] ?? '24' ?>&amp;rec=1" style="border:0;" alt="" /></p></noscript>
 </head>
 <body>
 	<header>

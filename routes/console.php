@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Mail\Contact;
+use App\Console\QuotasCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,3 +79,7 @@ Artisan::command('seed:days', function () {
 
     echo $pdo->exec('UPDATE `log` SET `day` = DATE(`date`) WHERE `day` IS NULL LIMIT 1000') . "\n";
 })->purpose('Display an inspiring quote');
+
+Artisan::command('quotas', function () {
+    (new QuotasCommand())->run();
+})->purpose('Send warning for high quotas');

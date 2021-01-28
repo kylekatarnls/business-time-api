@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Model;
 
+use App\Models\User;
 use Tests\TestCase;
 
 final class RefundTest extends TestCase
@@ -9,7 +10,7 @@ final class RefundTest extends TestCase
     public function testRefund(): void
     {
         $ziggy = $this->newZiggy();
-        $customer = $ziggy->createAsStripeCustomer();
+        $ziggy->createAsStripeCustomer();
         $cardExpiration = now()->addMonths(2);
         $stripe = $this->getStripeClient();
         $paymentMethod = $stripe->paymentMethods->create([
@@ -22,38 +23,55 @@ final class RefundTest extends TestCase
             ],
         ]);
         $ziggy->updateDefaultPaymentMethod($paymentMethod);
-//        $paymentIntent = $stripe->paymentIntents->create([
-//            'amount' => 34900,
-//            'currency' => 'eur',
-//            'payment_method_types' => ['card'],
-//            'setup_future_usage' => 'off_session',
-//        ]);
         $ziggy->cancelSubscriptionsSilently();
         $subscription = $ziggy->subscribePlan('premium', 'yearly');
+        $this->assertSame(
+            config('plan.premium.id'),
+            $subscription->asStripeSubscription()->items->data[0]->plan['product'],
+        );
         $this->assertSame(
             config('plan.premium.id'),
             $ziggy->getActiveSubscription()->items->data[0]->plan['product'],
         );
 
-        return;
+        /**
+         * Reload user.
+         *
+         * @var User $ziggy
+         */
+        $ziggy = User::find($ziggy->id);
 
-        // TODO finish test
-        foreach ($ziggy->getSubscriptions() as $subscription) {
-            var_dump(
-                $subscription->active(),
-                $subscription->latestPayment()
-            );
-        }
-        exit;
-        $ziggy->refundUntil(150);
+        $ziggy->refundUntil(1.50);
 
         $amounts = [];
 
+        $encode = fn (string $code, int $prefixLength) => substr($code, 0, $prefixLength) .
+            round((strlen($code) - $prefixLength) / 6);
+
         foreach ($ziggy->refunds as $refund) {
-            $amounts[] = $refund->getAmount();
+            $amounts[] = [
+                'amount' => $refund->getAmount(),
+                'cents_amount' => $refund->cents_amount,
+                'stripe_refund_id' => $encode($refund->stripe_refund_id, 3),
+                'payment_intent' => $encode($refund->payment_intent, 3),
+                'balance_transaction' => $encode($refund->balance_transaction, 4),
+                'charge' => $encode($refund->charge, 3),
+                'status' => $refund->status,
+                'currency' => $refund->currency,
+            ];
         }
 
-        $this->assertTrue($ziggy->subscribed('premium'));
-        $this->assertSame([1.5], $amounts);
+        $this->assertSame([
+            [
+                'amount' => 1.5,
+                'cents_amount' => 150,
+                'stripe_refund_id' => 're_4',
+                'payment_intent' => 'pi_4',
+                'balance_transaction' => 'txn_4',
+                'charge' => 'ch_4',
+                'status' => 'succeeded',
+                'currency' => 'eur',
+            ],
+        ], $amounts);
     }
 }
