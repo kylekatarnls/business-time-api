@@ -15,13 +15,24 @@
                             class="flex flex-grow flex-row hover:bg-blue-200 p-1 border-b border-gray-400"
                         >
                             <span class="flex w-1/4">
-                                {{ $user->id }}
-
                                 @php
-                                $plan = $user->getPlanId();
+                                    $plan = $user->getPlanId();
                                 @endphp
+
+                                <span class="flex w-1/3">
+                                    {{ $user->id }}
+                                </span>
+                                <span class="flex w-1/3 flex-col" style="position: relative; left: -5px;">
+                                    <span>{{ round(100 * $user->getPlanRatio($plan)) }}%</span>
+                                    <span
+                                        style="border: 1px solid silver;"
+                                    ><span
+                                            class="block" style="height: 2px; background: #3949ab; width: {{ 100 * min(1, $user->getPlanRatio()) }}%"
+                                        ></span></span>
+                                </span>
+
                                 @if ($plan)
-                                    &nbsp; <strong>{{ $plan }}</strong>
+                                    <strong class="flex w-1/3">{{ $plan }}</strong>
                                 @endif
                             </span>
                             <span class="flex w-1/2">
