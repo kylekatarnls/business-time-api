@@ -340,7 +340,8 @@ final class User extends Authenticatable
         }
 
         $subscriptionBaseDirectory = __DIR__ . '/../../data/subscription-count/';
-        $subscriptionDirectory = $subscriptionBaseDirectory . 'u' . $this->id;
+        $subscriptionDirectory = $subscriptionBaseDirectory . 's' .
+            $this->subscriptions->where('stripe_status', 'active')->first()->id;
         $subscriptionFile = $subscriptionDirectory . '/m' . $subscriptionAge . '.txt';
 
         return (int) @file_get_contents($subscriptionFile);
