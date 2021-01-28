@@ -332,5 +332,6 @@
     ":amount from the ongoing previous subscription will be deduced from next payments.": ":amount de reliquat de l'abonnement précédent sera déduits des prochaines échéances de paiement.",
     "Any subscription can be stopped at any moment, refunding to you the remaining credit.": "N'importe quel abonnement peut être interrompu à tout moment, le crédit non utilisé vous est alors remboursé.",
     "Use the :subDomain precise sub-domain (to exclude other sub-domains of the same top level domain.": "Utiliser le sous-domaine précis :subDomain (pour exclure les autres sous-domaines du même domaine de premier niveau).",
-    "First, please register your website or server and give it a name.": "Tout d'abord, veuillez enregistrer votre site web ou serveur et lui donner un nom."
+    "First, please register your website or server and give it a name.": "Tout d'abord, veuillez enregistrer votre site web ou serveur et lui donner un nom.",
+    "Under reserve of validity and acceptation of the request based on the website main activity (or \"whois\" information for IP). We might ask for further proof of the identity, activity, and the necessity for higher requests limits.": "Sous réserver de valididté et d'acceptation de la demande basée sur l'activité principale du site web (ou des informations \"whois\" pour une IP). Nous pouvons demander des jusitifcatifs d'identité, d'activité et de la nécessité de l'augmentation des quotas."
 }

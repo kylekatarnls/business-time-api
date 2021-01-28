@@ -21,9 +21,9 @@ class AbstractController extends Controller
         return $user;
     }
 
-    protected function getApiAuthorizations(): Collection
+    protected function getApiAuthorizations(?User $user = null): Collection
     {
-        return $this->getUser()->apiAuthorizations()->getResults();
+        return ($user ?? $this->getUser())->apiAuthorizations()->getResults();
     }
 
     protected function clearCache(string $type, string $value): bool

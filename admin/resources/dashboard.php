@@ -50,6 +50,14 @@ define('GLOBAL_WHERE',
 	(empty($_GET['domain']) ? '' : ' AND l.domain = ' . $pdo->quote($_GET['domain'] === EMPTY_STRING ? '' : $_GET['domain']))
 );
 
+/** @var PDOStatement $query */
+$query = $pdo->query('SELECT * FROM `api_authorizations`');
+$authorizations = [];
+
+while ($data = ($query->fetch(PDO::FETCH_OBJ))) {
+    $authorizations[$data->type . ':' . $data->value] = $data->user_id;
+}
+
 $data = $pdo->query('
 	SELECT
 		CONCAT(DATE(d.`date`), \' 01:PM\'),
@@ -153,6 +161,9 @@ $villes = $pdo->query('
 									<td>
 										<a href="?domain=<?= urlencode($domain) ?>"><?= $domain ?></a>
 										<a href="http://<?= $row->domain ?>"><img src="/admin/external-link.png"></a>
+                                        <?php if (isset($authorizations['domain:' . $row->domain])) { ?>
+                                            <a href="/dashboard/<?= $authorizations['domain:' . $row->domain] ?>">🙍</a>
+                                        <?php } ?>
 									</td>
 									<td <?= countStyle($row->count, $config) ?>><?= number_format((float) $row->count, 0, ',', ' ') ?></td>
 								</tr>
@@ -196,6 +207,9 @@ $villes = $pdo->query('
 									<td>
 										<a href="?ip=<?= $row->ip ?>"><?= $row->ip ?></a>
 										<a href="http://<?= $row->ip ?>"><img src="/admin/external-link.png"></a>
+                                        <?php if (isset($authorizations['ip:' . $row->ip])) { ?>
+                                            <a href="/dashboard/<?= $authorizations['ip:' . $row->ip] ?>">🙍</a>
+                                        <?php } ?>
 									</td>
 									<td <?= countStyle($row->count, $config) ?>><?= number_format((float) $row->count, 0, ',', ' ') ?></td>
 								</tr>

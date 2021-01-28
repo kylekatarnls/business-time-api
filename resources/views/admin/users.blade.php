@@ -16,6 +16,13 @@
                         >
                             <span class="flex w-1/4">
                                 {{ $user->id }}
+
+                                @php
+                                $plan = $user->getPlanId();
+                                @endphp
+                                @if ($plan)
+                                    &nbsp; <strong>{{ $plan }}</strong>
+                                @endif
                             </span>
                             <span class="flex w-1/2">
                                 {{ $user->email }}
