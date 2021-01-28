@@ -357,9 +357,10 @@ final class User extends Authenticatable
             return $this->getPaidRequests() / ($plan['limit']);
         }
 
-        return $this->apiAuthorizations->reduce(static function (int $max, ApiAuthorization $authorization) {
-            return max($authorization->getFreeCount(), $max);
-        }, 0) / Plan::fromId('free')['limit'];
+        return $this->apiAuthorizations->reduce(
+            static fn (int $max, ApiAuthorization $authorization) => max($max, (int) $authorization->getFreeCount()),
+            0,
+        ) / Plan::fromId('free')['limit'];
     }
 
     public function getCardIcon(): string
