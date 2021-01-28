@@ -42,12 +42,13 @@ final class DomainTest extends TestCase
         $sentence = $this->domain->getVerification(new ApiAuthorization([
             'value' => 'google.com',
         ]));
+        $appUrl = config('app.url');
 
         $this->assertStringStartsWith(
             'Avant que vous puissiez commencer à utiliser "google.com", ' .
             'nous devons vérifier que vous en êtes le propriétaire. ' .
             'Veuillez télécharger le fichier ' .
-            '<a class="text-gray-600" href="http://127.0.0.1:8000/authorization/verification-file/google.com">',
+            '<a class="text-gray-600" href="' . $appUrl . '/authorization/verification-file/google.com">',
             $sentence,
         );
         $this->assertStringContainsString(

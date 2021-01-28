@@ -2,12 +2,8 @@
 
 namespace Tests\Unit\Authorization;
 
-use App\Authorization\Authorization;
-use App\Authorization\AuthorizationFactory;
-use App\Authorization\Domain;
 use App\Authorization\Ip;
 use App\Models\ApiAuthorization;
-use InvalidArgumentException;
 use Tests\TestCase;
 
 final class IpTest extends TestCase
@@ -46,17 +42,18 @@ final class IpTest extends TestCase
             'value' => '189.204.12.55',
         ]);
         $sentence = $this->ip->getVerification($authorization);
+        $appUrl = config('app.url');
 
         $this->assertStringStartsWith(
             'Avant que vous puissiez commencer à utiliser "189.204.12.55", ' .
             'nous devons vérifier que vous en êtes le propriétaire. ' .
             'Veuillez envoyer une requête GET depuis votre serveur ' .
             '(en utilisant <code>wget</code>, <code>curl</code> ou autre) ' .
-            'vers <a class="text-gray-600" href="http://127.0.0.1:8000/verify-ip/ziggy%40star.dust/',
+            'vers <a class="text-gray-600" href="' . $appUrl . '/verify-ip/ziggy%40star.dust/',
             $sentence,
         );
         $this->assertStringContainsString(
-            '">http://127.0.0.1:8000/verify-ip/ziggy%40star.dust/',
+            '">' . $appUrl . '/verify-ip/ziggy%40star.dust/',
             $sentence,
         );
         $this->assertStringEndsWith(
