@@ -169,7 +169,7 @@ try {
                     if ($count >= $guestLimit) {
                         $quotaReached = true;
                         $cacheFile = __DIR__."/data/properties/$type/$property.php";
-                        $subscription = @file_exists($cacheFile) && time() - filemtime($cacheFile) < 3600
+                        $subscription = @file_exists($cacheFile) && time() - filemtime($cacheFile) < 1
                             ? @include $cacheFile
                             : null;
 
@@ -212,7 +212,7 @@ try {
                                     'start' => $config['plan']['start']['limit'] ?? 20000,
                                     'pro' => $config['plan']['pro']['limit'] ?? 200000,
                                     'premium' => $config['plan']['premium']['limit'] ?? INF,
-                                    default => $config['plan']['pro']['limit'] ?? 20000,
+                                    default => $limit,
                                 };
                                 $quotaMax = max($quotaMax, $quota) * ($config['app']['quota_factor'][$userId] ?? 1);
                                 $date = new DateTimeImmutable($subscription->subscribed_at);
@@ -227,7 +227,7 @@ try {
 
                                 $subscriptionFile = $subscriptionDirectory.'/m'.$month.'.txt';
                                 $subscriptionCount = ((int) @file_get_contents($subscriptionFile)) + 1;
-                                $quotaReached = $subscriptionCount > $quota;
+                                $quotaReached = $subscriptionCount > ($quotaMax - $limit);
 
                                 if (!$quotaReached) {
                                     $counted = true;
@@ -243,7 +243,7 @@ try {
 
                     $fileUpdates = [$file];
 
-                    $blocked = !$paid && $quotaReached && !$counted;
+                    $blocked = $quotaReached && !$counted;
 
                     if ($blocked) {
                         $blockages[] = $property;
