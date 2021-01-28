@@ -324,6 +324,13 @@ final class User extends Authenticatable
         return CarbonImmutable::createFromTimestamp($subscription['created'])->diffInMonths();
     }
 
+    public function getPlanId(?array $planKeys = null): ?string
+    {
+        return collect($planKeys ?? array_keys(Plan::getPlansData()))->first(
+            fn(string $planId) => $this->subscribed($planId),
+        );
+    }
+
     public function getPaidRequests(?int $month = null): ?int
     {
         $subscriptionAge = $month ?? $this->getCurrentActiveSubscriptionAge();

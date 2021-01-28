@@ -143,7 +143,7 @@ class Controller extends AbstractController
         $defaultValues = compact('ip', 'domain');
         $this->prefillDashboardAuthorization($types, $session);
         $authorizations = array_map(
-            fn(string $type) => $this->getApiAuthorizationsData($type, $defaultValues[$type] ?? null),
+            fn(string $type) => $this->getApiAuthorizationsData($type, $user, $defaultValues[$type] ?? null),
             $types,
         );
         $defaultAuthorization =
@@ -151,7 +151,7 @@ class Controller extends AbstractController
                 $authorizations[0];
         $defaultAuthorization->default = true;
         $plans = Plan::getPlansData();
-        $planId = collect(array_keys($plans))->first(fn(string $planId) => $user->subscribed($planId));
+        $planId = $user->getPlanId(array_keys($plans));
         $nextBill = '';
         $nextCounterReset = '';
         $subscription = $user->getActiveSubscription();
@@ -502,12 +502,12 @@ class Controller extends AbstractController
         return $data;
     }
 
-    private function getApiAuthorizationsData(string $type, $defaultValue = null): object
+    private function getApiAuthorizationsData(string $type, ?User $user = null, $defaultValue = null): object
     {
         return (object) [
             'type'  => $type,
             'name'  => $this->getApiAuthorizationName($type),
-            'list'  => $this->getApiAuthorizationsByType($type),
+            'list'  => $this->getApiAuthorizationsByType($type, $user),
             'value' => old($type) ?? $defaultValue,
         ];
     }
@@ -517,12 +517,12 @@ class Controller extends AbstractController
         return AuthorizationFactory::fromType($type)->getName();
     }
 
-    private function getApiAuthorizationsByType(string $type): Collection
+    private function getApiAuthorizationsByType(string $type, ?User $user = null): Collection
     {
         static $apiAuthorizations = null;
 
         if ($apiAuthorizations === null) {
-            $apiAuthorizations = $this->getApiAuthorizations();
+            $apiAuthorizations = $this->getApiAuthorizations($user);
         }
 
         return $apiAuthorizations

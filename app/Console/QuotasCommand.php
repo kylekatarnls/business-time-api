@@ -48,8 +48,7 @@ final class QuotasCommand
      */
     private function checkProperties(User $user, Collection $authorizations): void
     {
-        $plans = Plan::getPlansData();
-        $planId = collect(array_keys($plans))->first(fn(string $planId) => $user->subscribed($planId)) ?? 'free';
+        $planId = $user->getPlanId() ?? 'free';
         $plan = Plan::fromId($planId);
 
         echo "$planId: " . $user->name . "\n";
