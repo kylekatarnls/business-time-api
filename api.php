@@ -214,7 +214,7 @@ try {
                                     'premium' => $config['plan']['premium']['limit'] ?? INF,
                                     default => $config['plan']['pro']['limit'] ?? 20000,
                                 };
-                                $quotaMax = max($quotaMax, $quota);
+                                $quotaMax = max($quotaMax, $quota) * ($config['app']['quota_factor'][$userId] ?? 1);
                                 $date = new DateTimeImmutable($subscription->subscribed_at);
                                 $diff = $date->diff(new DateTimeImmutable());
                                 $month = $diff->y * 12 + $diff->m;

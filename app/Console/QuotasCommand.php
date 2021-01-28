@@ -53,6 +53,7 @@ final class QuotasCommand
         $plan = Plan::fromId($planId);
 
         echo "$planId: " . $user->name . "\n";
+        echo $user->id . '   ' . $user->email . "\n";
 
         if ($planId === 'free') {
             foreach ($authorizations as $authorization) {
@@ -67,6 +68,14 @@ final class QuotasCommand
         }
 
         echo json_encode($user->getCurrentActiveSubscriptionAge()) . ' months  ' .
-            $this->fraction($user->getPaidRequests(), $plan['limit'], 20) . "\n\n";
+            $this->fraction($user->getPaidRequests(), $plan['limit'], 20) . "\n";
+
+        foreach ($authorizations as $authorization) {
+            echo ' - ' . str_pad($authorization->value, 36) .
+                $this->number($authorization->getFreeCount()) .
+                "\n";
+        }
+
+        echo "\n";
     }
 }

@@ -60,7 +60,7 @@
                                     <span class="py-1 px-3 mr-2 bg-green-700 text-white text-sm rounded-lg">{{ $plan['name'] }}</span>
                                     {{ __('Total paid requests: :requests / :limit', [
                                         'requests' => Number::format($paidRequests),
-                                        'limit' => Number::format($plan['limit']),
+                                        'limit' => Number::format($limit),
                                     ]) }}
                                 </p>
                                 <div class="mt-2 p-1 bg-gray-100 border-2">
@@ -89,7 +89,7 @@
                             <p class="my-4">
                                 {{ __('Your :plan subscription allow you :requests more requests per month shared among your properties.', [
                                     'plan' => $plan['name'],
-                                    'requests' => Number::format($plan['limit']),
+                                    'requests' => Number::format($limit),
                                 ]) }}
                             </p>
                         @else
