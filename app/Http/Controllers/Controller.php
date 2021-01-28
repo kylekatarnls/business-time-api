@@ -121,8 +121,16 @@ class Controller extends AbstractController
         return $this->home();
     }
 
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request, ?string $userId = null): Response
     {
+        /** @var User $user */
+        $user = $request->user();
+        $onBehalf = $userId !== null && $user->isSuperAdmin();
+
+        if ($onBehalf) {
+            $user = User::find($userId);
+        }
+
         $types = config('app.authorizations');
         $session = $request->session();
         $property = $request->query->get('property') ?: $session->get('property');
@@ -133,8 +141,6 @@ class Controller extends AbstractController
             ? $match[1]
             : null;
         $defaultValues = compact('ip', 'domain');
-        /** @var User $user */
-        $user = $request->user();
         $this->prefillDashboardAuthorization($types, $session);
         $authorizations = array_map(
             fn(string $type) => $this->getApiAuthorizationsData($type, $defaultValues[$type] ?? null),
@@ -166,6 +172,8 @@ class Controller extends AbstractController
         $limit = ($plans[$planId]['limit'] ?? 0) * (config('app.quota_factor')[$user->id] ?? 1);
 
         $view = ResponseFacade::view('dashboard', [
+            'user'                  => $user,
+            'onBehalf'              => $onBehalf,
             'domain'                => $domain,
             'name'                  => old('name') ?: ($isIP
                 ? 'Server'

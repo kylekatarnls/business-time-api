@@ -11,6 +11,30 @@ define('EMPTY_STRING', '(empty)');
 
 $prodDbFile = __DIR__ . '/../../bdd_prod.php';
 
+$config = @include __DIR__ . '/../../bootstrap/cache/config.php' ?: [];
+
+function countStyle($count, array $config)
+{
+    $monthlyEstimatedCount = $count * 30 / GLOBAL_INTERVAL;
+    $limits = array_values(array_map(static fn (array $plan) => $plan['limit'], $config['plan'] ?? []));
+
+    $rank = 0;
+
+    foreach ($limits as $index => $limit) {
+        if ($monthlyEstimatedCount >= $limit) {
+            $rank = $index + 1;
+        }
+    }
+
+    if ($rank) {
+        $rate = 1 - $rank / count($limits);
+
+        return ' style="background: hsl(' . round(130 * $rate) . 'deg 100% ' . (76 + round($rate * 16)) . '%);"';
+    }
+
+    return '';
+}
+
 $pdo = null;
 
 include_once file_exists($prodDbFile) ? $prodDbFile : __DIR__ . '/../../bdd.php';
@@ -110,7 +134,7 @@ $villes = $pdo->query('
 <div class="row" style="margin: 50px auto; max-width: 1400px;">
 	<div class="col-xs-12">
 		<div class="row">
-			<div class="col-xs-12" data-graph="<?php echo htmlspecialchars(json_encode($data)); ?>" style="height: 200px;"></div>
+			<div class="col-xs-12" data-graph="<?= htmlspecialchars(json_encode($data)) ?>" style="height: 200px;"></div>
 		</div>
 		<div class="row">
 			<div class="col-xs-6">
@@ -127,10 +151,10 @@ $villes = $pdo->query('
 								?>
 								<tr>
 									<td>
-										<a href="?domain=<?php echo urlencode($domain); ?>"><?php echo $domain; ?></a>
-										<a href="http://<?php echo $row->domain; ?>"><img src="/admin/external-link.png"></a>
+										<a href="?domain=<?= urlencode($domain) ?>"><?= $domain ?></a>
+										<a href="http://<?= $row->domain ?>"><img src="/admin/external-link.png"></a>
 									</td>
-									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
+									<td <?= countStyle($row->count, $config) ?>><?= number_format((float) $row->count, 0, ',', ' ') ?></td>
 								</tr>
 								<?php
 							}
@@ -170,10 +194,10 @@ $villes = $pdo->query('
 								?>
 								<tr>
 									<td>
-										<a href="?ip=<?php echo $row->ip; ?>"><?php echo $row->ip; ?></a>
-										<a href="http://<?php echo $row->ip; ?>"><img src="/admin/external-link.png"></a>
+										<a href="?ip=<?= $row->ip ?>"><?= $row->ip ?></a>
+										<a href="http://<?= $row->ip ?>"><img src="/admin/external-link.png"></a>
 									</td>
-									<td><?php echo number_format((float) $row->count, 0, ',', ' '); ?></td>
+									<td <?= countStyle($row->count, $config) ?>><?= number_format((float) $row->count, 0, ',', ' ') ?></td>
 								</tr>
 								<?php
 							}
