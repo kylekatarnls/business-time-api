@@ -347,6 +347,21 @@ final class User extends Authenticatable
         return (int) @file_get_contents($subscriptionFile);
     }
 
+    public function getPlanRatio(?string $planId = null): float
+    {
+        $planId = $planId ?? $this->getPlanId();
+        $planData = Plan::getPlansData();
+        $plan = $planData[$planId] ?? null;
+
+        if ($planId) {
+            return $this->getPaidRequests() / ($plan['limit']);
+        }
+
+        return $this->apiAuthorizations->reduce(static function (int $max, ApiAuthorization $authorization) {
+            return max($authorization->getFreeCount(), $max);
+        }, 0) / Plan::fromId('free')['limit'];
+    }
+
     public function getCardIcon(): string
     {
         return asset(
