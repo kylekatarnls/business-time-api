@@ -3,7 +3,9 @@
 namespace Tests;
 
 use App\Models\User;
+use Carbon\Bespin;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Hash;
 use Stripe\StripeClient;
 
 abstract class TestCase extends BaseTestCase
@@ -17,9 +19,9 @@ abstract class TestCase extends BaseTestCase
         User::where(['email' => 'ziggy@star.dust'])->forceDelete();
 
         return User::create([
-            'name' => 'David Bowie',
-            'email' => 'ziggy@star.dust',
-            'password' => 'G0¤d5tr@ñ9P##55wo&d',
+            'name'     => 'David Bowie',
+            'email'    => 'ziggy@star.dust',
+            'password' => Hash::make('G0¤d5tr@ñ9P##55wo&d'),
         ]);
     }
 
@@ -32,5 +34,19 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $this->stripeClient;
+    }
+
+    protected function setUp(): void
+    {
+        Bespin::up($this);
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Bespin::down();
     }
 }

@@ -50,6 +50,8 @@ final class RefundTest extends TestCase
 
         foreach ($ziggy->refunds as $refund) {
             $amounts[] = [
+                'user' => $refund->user->name,
+                'check' => $refund->asStripeRefund()['id'] === $refund->stripe_refund_id,
                 'amount' => $refund->getAmount(),
                 'cents_amount' => $refund->cents_amount,
                 'stripe_refund_id' => $encode($refund->stripe_refund_id, 3),
@@ -63,6 +65,8 @@ final class RefundTest extends TestCase
 
         $this->assertSame([
             [
+                'user' => 'David Bowie',
+                'check' => true,
                 'amount' => 1.5,
                 'cents_amount' => 150,
                 'stripe_refund_id' => 're_4',
