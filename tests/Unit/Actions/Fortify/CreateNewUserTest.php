@@ -13,8 +13,7 @@ final class CreateNewUserTest extends TestCase
     public function testCreate(): void
     {
         User::where('email', 'nobody@selfbuild.fr')->forceDelete();
-        $creator = new CreateNewUser();
-        $user = $creator->create([
+        $user = (new CreateNewUser())->create([
             'name'                  => 'Nobody',
             'email'                 => 'nobody@selfbuild.fr',
             'password'              => 'IShould8e5tr¤ngEnough',
@@ -33,8 +32,7 @@ final class CreateNewUserTest extends TestCase
         $errors = [];
 
         try {
-            $creator = new CreateNewUser();
-            $user = $creator->create([
+            (new CreateNewUser())->create([
                 'name'                  => 'Nobody',
                 'email'                 => 'nobody@selfbuild.fr',
                 'password'              => 'IShould8e5tr¤ngEnough',

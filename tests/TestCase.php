@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Models\User;
+use Carbon\Bespin;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Stripe\StripeClient;
 
@@ -32,5 +33,19 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $this->stripeClient;
+    }
+
+    protected function setUp(): void
+    {
+        Bespin::up($this);
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Bespin::down();
     }
 }
