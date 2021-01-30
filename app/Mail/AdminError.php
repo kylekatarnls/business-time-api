@@ -18,12 +18,12 @@ final class AdminError extends Mailable
      */
     public function __construct(private array $data)
     {
-        $data['exceptions'] = array_map(static fn(Throwable $exception) => (object) [
+        $this->data['exceptions'] = array_map(static fn(Throwable $exception) => (object) [
             'message' => $exception->getMessage(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
             'stack' => $exception->getTraceAsString(),
-        ], $data['exceptions']);
+        ], $this->data['exceptions']);
     }
 
     /**
