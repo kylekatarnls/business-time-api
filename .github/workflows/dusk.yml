@@ -91,6 +91,7 @@ jobs:
           php artisan config:clear
           php artisan config:cache
           php artisan directories
+          php artisan storage:link
         env:
           PHP_VERSION: ${{ matrix.php }}
           STRIPE_KEY: ${{ secrets.STRIPE_KEY }}
