@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\Contact;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -34,5 +35,13 @@ final class LoginTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertSeeText('Ces identifiants ne correspondent pas à nos enregistrements');
+    }
+
+    public function testLoginRedirection(): void
+    {
+        $response = $this->actingAs($this->newZiggy())->get('/login');
+
+        $response->assertStatus(302);
+        $response->assertRedirect(RouteServiceProvider::HOME);
     }
 }
