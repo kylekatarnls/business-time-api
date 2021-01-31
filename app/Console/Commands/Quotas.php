@@ -277,7 +277,7 @@ final class Quotas extends Command
             return;
         }
 
-        $this->sendMail(
+        $this->sendMailSilently(
             $user->email,
             new LimitThreshold([
                 'title' => $title,
