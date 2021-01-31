@@ -388,7 +388,7 @@ final class User extends Authenticatable
         ) / Plan::fromId('free')['limit'];
     }
 
-    public function getLimit(array|Plan|string|int|float|null $plan): int|float
+    public function getLimit(array|Plan|string|int|float|null $plan = null): int|float
     {
         if (is_string($plan)) {
             $plan = Plan::fromId($plan);
