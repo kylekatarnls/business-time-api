@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use ArrayAccess;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -105,6 +106,16 @@ final class User extends Authenticatable
     public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
+    }
+
+    public function apiAuthorizationQuotaNotifications(): HasMany
+    {
+        return $this->hasMany(ApiAuthorizationQuotaNotification::class);
+    }
+
+    public function subscriptionQuotaNotifications(): HasMany
+    {
+        return $this->hasMany(SubscriptionQuotaNotification::class);
     }
 
     /**
@@ -333,6 +344,18 @@ final class User extends Authenticatable
         );
     }
 
+    public function getPaidPlan(?array $planKeys = null): ?Plan
+    {
+        return collect($planKeys ?? array_keys(Plan::getPlansData()))->first(
+            fn(string $planId) => $this->subscribed($planId),
+        );
+    }
+
+    public function getPlan(?array $planKeys = null): Plan
+    {
+        return $this->getPaidPlan($planKeys) ?? Plan::fromId('free');
+    }
+
     public function getPaidRequests(?int $month = null): ?int
     {
         $subscriptionAge = $month ?? $this->getCurrentActiveSubscriptionAge();
@@ -363,6 +386,23 @@ final class User extends Authenticatable
             static fn (int $max, ApiAuthorization $authorization) => max($max, (int) $authorization->getFreeCount()),
             0,
         ) / Plan::fromId('free')['limit'];
+    }
+
+    public function getLimit(array|Plan|string|int|float|null $plan): int|float
+    {
+        if (is_string($plan)) {
+            $plan = Plan::fromId($plan);
+        }
+
+        if (is_array($plan) && !isset($plan['limit'])) {
+            $plan = $this->getPlan($plan);
+        }
+
+        $limit = (float) (is_array($plan) || $plan instanceof ArrayAccess ? ($plan['limit'] ?? 0) : $plan);
+        $limit *= (float) (config('app.quota_factor')[$this->id] ?? 1);
+        $intLimit = (int) $limit;
+
+        return $limit === (float) $intLimit ? $intLimit : $limit;
     }
 
     public function getCardIcon(): string

@@ -169,7 +169,7 @@ class Controller extends AbstractController
         }
 
         $paidRequests = $user->getPaidRequests();
-        $limit = ($plans[$planId]['limit'] ?? 0) * (config('app.quota_factor')[$user->id] ?? 1);
+        $limit = $user->getLimit($plans[$planId] ?? null);
 
         $view = ResponseFacade::view('dashboard', [
             'user'                  => $user,
