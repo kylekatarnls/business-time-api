@@ -10,7 +10,13 @@ final class RefundTest extends TestCase
     public function testRefund(): void
     {
         $ziggy = $this->newZiggy();
+        $this->assertFalse($ziggy->hasStripeId());
+        $this->assertFalse($ziggy->canSubscribeAPlan());
+        $this->assertFalse($ziggy->hasBilling());
         $ziggy->createAsStripeCustomer();
+        $this->assertTrue($ziggy->hasStripeId());
+        $this->assertTrue($ziggy->canSubscribeAPlan());
+        $this->assertFalse($ziggy->hasBilling());
         $cardExpiration = now()->addMonths(2);
         $stripe = $this->getStripeClient();
         $paymentMethod = $stripe->paymentMethods->create([
@@ -25,6 +31,11 @@ final class RefundTest extends TestCase
         $ziggy->updateDefaultPaymentMethod($paymentMethod);
         $ziggy->cancelSubscriptionsSilently();
         $subscription = $ziggy->subscribePlan('premium', 'yearly');
+        $this->assertTrue($ziggy->hasStripeId());
+        $this->assertTrue($ziggy->canSubscribeAPlan());
+        $this->assertFalse($ziggy->hasBilling());
+        $ziggy->last_subscribe_at = now();
+        $this->assertTrue($ziggy->hasBilling());
         $this->assertSame(
             config('plan.premium.id'),
             $subscription->asStripeSubscription()->items->data[0]->plan['product'],
@@ -34,12 +45,7 @@ final class RefundTest extends TestCase
             $ziggy->getActiveSubscription()->items->data[0]->plan['product'],
         );
 
-        /**
-         * Reload user.
-         *
-         * @var User $ziggy
-         */
-        $ziggy = User::find($ziggy->id);
+        $ziggy = $this->reloadUser($ziggy);
 
         $ziggy->refundUntil(1.50);
 

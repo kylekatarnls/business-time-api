@@ -11,8 +11,11 @@ use App\Models\User;
 use App\Util\SendMail;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 final class Quotas extends Command
 {
@@ -40,9 +43,11 @@ final class Quotas extends Command
         /** @var array<int, int> */
         private ?array $apiAuthorizationThresholds = null,
         /** @var array<int, int> */
-        private ?array $subscriptionThreshold = null
+        private ?array $subscriptionThreshold = null,
+        /** @var Closure(): User[] */
+        private ?Closure $usersGetter = null
     ) {
-        $this->apiAuthorizationThresholds = $this->subscriptionThreshold
+        $this->apiAuthorizationThresholds = $this->apiAuthorizationThresholds
             ?? config('notification.quota.api_authorization');
 
         $this->subscriptionThreshold = $this->subscriptionThreshold
@@ -64,7 +69,7 @@ final class Quotas extends Command
 
     public function handle(): int
     {
-        foreach (User::all() as $user) {
+        foreach (($this->usersGetter ?? static fn () => User::all())() as $user) {
             $this->checkQuotasFor($user);
         }
 
@@ -177,7 +182,7 @@ final class Quotas extends Command
                     ],
                 );
 
-                $user->apiAuthorizationQuotaNotifications()->create([
+                $this->recordNotification($user->apiAuthorizationQuotaNotifications(), [
                     'api_authorization_id' => $authorization->id,
                     'year' => $this->year,
                     'month' => $this->month,
@@ -260,7 +265,7 @@ final class Quotas extends Command
                 ],
             );
 
-            $user->subscriptionQuotaNotifications()->create([
+            $this->recordNotification($user->apiAuthorizationQuotaNotifications(), [
                 'subscription_id' => $id,
                 'year' => $year,
                 'month' => $month,
@@ -271,11 +276,22 @@ final class Quotas extends Command
         $this->writeLine();
     }
 
+    private function recordNotification(HasMany $notificationList, array $attributes)
+    {
+        if ($this->option('dry-run')) {
+            return;
+        }
+
+        $notificationList->create($attributes);
+    }
+
     private function sendLimitMail(User $user, string $title, string $content, array $properties = []): void
     {
         if ($this->option('dry-run')) {
             return;
         }
+
+        Log::info('Notice to ' . $user->email . "\n" . $title . "\n" . $content);
 
         $this->sendMailSilently(
             $user->email,
@@ -299,6 +315,6 @@ final class Quotas extends Command
             return;
         }
 
-        echo "$line\n";
+        $this->getOutput()->writeln($line);
     }
 }

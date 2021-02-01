@@ -14,15 +14,25 @@ abstract class TestCase extends BaseTestCase
 
     protected ?StripeClient $stripeClient = null;
 
+    protected function newUser(string $name, string $email, array $properties = []): User
+    {
+        User::where(['email' => $email])->forceDelete();
+
+        return User::create(array_merge([
+            'name'     => $name,
+            'email'    => $email,
+            'password' => Hash::make('G0¤d5tr@ñ9P##55wo&d'),
+        ], $properties));
+    }
+
     protected function newZiggy(): User
     {
-        User::where(['email' => 'ziggy@star.dust'])->forceDelete();
+        return $this->newUser('David Bowie', 'ziggy@star.dust');
+    }
 
-        return User::create([
-            'name'     => 'David Bowie',
-            'email'    => 'ziggy@star.dust',
-            'password' => Hash::make('G0¤d5tr@ñ9P##55wo&d'),
-        ]);
+    protected function reloadUser(User $user): User
+    {
+        return User::find($user->id);
     }
 
     protected function getStripeClient(): StripeClient
