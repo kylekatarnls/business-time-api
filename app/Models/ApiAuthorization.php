@@ -170,15 +170,20 @@ final class ApiAuthorization extends Model
         return max($minimum, $limit[$tld] ?? $limit[$this->value] ?? 0);
     }
 
+    public function getUnverifiedCount(string $suffix = ''): ?int
+    {
+        $count = @trim(file_get_contents($this->getCountFile($suffix)));
+
+        return is_numeric($count) ? intval($count) : null;
+    }
+
     private function retrieveCount(string $suffix = ''): ?int
     {
         if (!$this->verified_at) {
             return null;
         }
 
-        $count = @trim(file_get_contents($this->getCountFile($suffix)));
-
-        return is_numeric($count) ? intval($count) : null;
+        return $this->getUnverifiedCount($suffix);
     }
 
     private function getCountFile(string $suffix = ''): string

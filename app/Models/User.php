@@ -7,6 +7,7 @@ namespace App\Models;
 use ArrayAccess;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -372,7 +373,7 @@ final class User extends Authenticatable
         return (int) @file_get_contents($subscriptionFile);
     }
 
-    public function getPlanRatio(?string $planId = null): float
+    public function getPlanRatio(?string $planId = null, ?Closure $getter = null): float
     {
         $planId = $planId ?? $this->getPlanId();
         $planData = Plan::getPlansData();
@@ -383,9 +384,20 @@ final class User extends Authenticatable
         }
 
         return $this->apiAuthorizations->reduce(
-            static fn (int $max, ApiAuthorization $authorization) => max($max, (int) $authorization->getFreeCount()),
+            static fn (int $max, ApiAuthorization $authorization) => max(
+                $max,
+                (int) ($getter ? $getter($authorization) : $authorization->getFreeCount()),
+            ),
             0,
         ) / Plan::fromId('free')['limit'];
+    }
+
+    public function getUnverifiedPlanRatio(?string $planId = null)
+    {
+        return $this->getPlanRatio(
+            $planId,
+            static fn (ApiAuthorization $authorization) => $authorization->getUnverifiedCount(),
+        );
     }
 
     public function getLimit(array|Plan|string|int|float|null $plan = null): int|float

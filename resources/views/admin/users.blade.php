@@ -17,23 +17,30 @@
                             <span class="flex w-1/4">
                                 @php
                                     $plan = $user->getPlanId();
+                                    $percentage = 100 * $user->getUnverifiedPlanRatio($plan);
                                 @endphp
 
                                 <span class="flex w-1/3">
                                     {{ $user->id }}
                                 </span>
                                 <span class="flex w-1/3 flex-col" style="position: relative; left: -5px;">
-                                    <span>{{ round(100 * $user->getPlanRatio($plan)) }}%</span>
+                                    <span>{{ round($percentage) }}%</span>
                                     <span
                                         style="border: 1px solid silver;"
                                     ><span
-                                            class="block" style="height: 2px; background: #3949ab; width: {{ 100 * min(1, $user->getPlanRatio()) }}%"
+                                            class="block" style="height: 2px; background: #3949ab; width: {{ min(100, $percentage) }}%"
                                         ></span></span>
                                 </span>
 
-                                @if ($plan)
-                                    <strong class="flex w-1/3">{{ $plan }}</strong>
-                                @endif
+                                <span class="flex w-1/3">
+                                    @if ($plan)
+                                        <strong>⭐ {{ $plan }}</strong>
+                                    @elseif ($user->hasVerifiedProperties())
+                                        ✔️
+                                    @else
+                                        ❌
+                                    @endif
+                                </span>
                             </span>
                             <span class="flex w-1/2">
                                 {{ $user->email }}

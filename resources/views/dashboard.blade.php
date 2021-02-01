@@ -10,7 +10,15 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 @if($onBehalf)
                     <div><a href="{{ route('admin-users') }}">&lt; {{ __('Users') }}</a></div>
-                    <h3>{{ $user->name }}</h3>
+                    <h3 class="font-bold">
+                        {{ $user->name }}
+                        &nbsp;
+                        {{ $user->id }}
+                        &nbsp;
+                        {{ $user->email }}
+                        &nbsp;
+                        {{ $user->getPlanId() }}
+                    </h3>
                 @endif
 
                 @foreach($errors as $error)
