@@ -15,7 +15,7 @@ trait SendMail
     {
         $adminMail = clone $mail;
         Mail::to($email)->send($mail);
-        Mail::to('kylekatarnls@gmail.com')->send($adminMail->with($adminData));
+        Mail::to(config('app.super_admin'))->send($adminMail->with($adminData));
     }
 
     protected function sendMailSilently(string $email, Mailable $mail, array $adminData = []): void

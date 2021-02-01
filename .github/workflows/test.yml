@@ -68,6 +68,7 @@ jobs:
           chmod -R 777 storage bootstrap/cache
           php artisan key:generate
           php artisan config:clear
+          php artisan directories
           php artisan storage:link
 
       - name: Initialize Database
