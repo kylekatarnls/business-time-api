@@ -51,6 +51,26 @@
     en tant que valeur.
 </p>
 <h3>
+    Remplir le champ au clic sur un des choix
+</h3>
+<?php jsfiddle('ntwycok6/11', 'html,result'); ?>
+<p>
+    Ajoutez l'attribut <code>data-vicopo-click</code> à ce même élément pour rendre les
+    choix clicables, cet attribut prend en valeur un objet JSON dont les clés sont les
+    sélecteurs et les valeur la donnée à insérer au clic (<code>"ville"</code>,
+    <code>"code"</code> ou n'importe quel texte dont les mots "code" et "ville" seront
+    remplacé par le code postal et la ville du choix sur lequel l'utilisateur a cliqué.
+</p>
+<p>
+    Alternativement, ajoutez l'attribut <code>data-vicopo-get="ville"</code> à l'élement
+    de saisie (input, textarea, etc.) et remplir le champ avec la ville au clic.
+</p>
+<p>
+    Utilisez <code>data-vicopo-get="code"</code> pour remplir le champ avec le code postal
+    ou <code>data-vicopo-get="code ville"</code> / <code>data-vicopo-get="ville code"</code>
+    pour obtenir les 2 dans l'ordre voulu.
+</p>
+<h3>
     Compléter le champ avec le premier nom de ville trouvé
 </h3>
 <?php jsfiddle('48uuL3v5/15'); ?>
