@@ -64,10 +64,10 @@ function getQuotaMax(PDO $pdo, string $type, string $property): array {
             if (!$counted && $count >= $limit) {
                 $userId = (int) $subscription->user_id;
                 $quota = match ($subscription->plan) {
-                    'start' => $config['plan']['guest']['limit'] ?? 20000,
+                    'start' => $config['plan']['start']['limit'] ?? 20000,
                     'pro' => $config['plan']['pro']['limit'] ?? 200000,
                     'premium' => $config['plan']['premium']['limit'] ?? INF,
-                    default => $config['plan']['pro']['limit'] ?? 20000,
+                    default => $config['plan']['guest']['limit'] ?? 20000,
                 };
                 $quotaMax = max($quotaMax, $quota);
                 $date = new DateTimeImmutable($subscription->subscribed_at);
