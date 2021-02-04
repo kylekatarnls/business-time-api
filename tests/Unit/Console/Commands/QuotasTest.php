@@ -154,6 +154,7 @@ final class QuotasTest extends TestCase
         $auth->verify();
         $ana->createAsStripeCustomer();
         $subscription = $this->subscribePlan($ana, 'pro', 'yearly');
+        $end = CarbonImmutable::createFromTimestamp($ana->getActiveSubscription()->current_period_end)->isoFormat('LLLL');
         $ana->last_subscribe_at = now();
         $ana->save();
         $ana = $this->reloadUser($ana);
@@ -193,7 +194,6 @@ final class QuotasTest extends TestCase
         @mkdir($subscriptionDirectory, 0777, true);
         $subscriptionFile = $subscriptionDirectory . '/m0.txt';
 
-        $end = CarbonImmutable::createFromTimestamp($subscription->current_period_end)->isoFormat('LLLL');
         file_put_contents($subscriptionFile, '188754');
         $ana = $this->reloadUser($ana);
 
