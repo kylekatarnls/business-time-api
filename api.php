@@ -172,6 +172,13 @@ try {
                         $subscription = @file_exists($cacheFile) && time() - filemtime($cacheFile) < 1
                             ? @include $cacheFile
                             : null;
+                        $limit = $config['plan']['free']['limit'] ?? 5000;
+                        $getQuota = static fn ($plan) => match ($plan) {
+                            'start' => $config['plan']['start']['limit'] ?? 20000,
+                            'pro' => $config['plan']['pro']['limit'] ?? 200000,
+                            'premium' => $config['plan']['premium']['limit'] ?? INF,
+                            default => $limit,
+                        };
 
                         if (!$subscription) {
                             $tldClause = '';
@@ -198,22 +205,22 @@ try {
                             $query->execute($queryParams);
                             $subscription = $query->fetch(PDO::FETCH_OBJ);
 
+                            while ($nextSubscription = $query->fetch(PDO::FETCH_OBJ)) {
+                                if ($getQuota($nextSubscription->plan) > $getQuota($subscription->plan)) {
+                                    $subscription = $nextSubscription;
+                                }
+                            }
+
                             @file_put_contents($cacheFile, '<?php return '.var_export($subscription, true).";\n");
                         }
 
                         if ($subscription) {
                             $quotaReached = false;
-                            $limit = $config['plan']['free']['limit'] ?? 5000;
                             $quotaMax = max($quotaMax, $limit);
 
                             if (!$counted && $count >= $limit) {
                                 $userId = (int) $subscription->user_id;
-                                $quota = match ($subscription->plan) {
-                                    'start' => $config['plan']['start']['limit'] ?? 20000,
-                                    'pro' => $config['plan']['pro']['limit'] ?? 200000,
-                                    'premium' => $config['plan']['premium']['limit'] ?? INF,
-                                    default => $limit,
-                                };
+                                $quota = $getQuota($subscription->plan);
                                 $quotaMax = max($quotaMax, $quota) * ($config['app']['quota_factor'][$userId] ?? 1);
                                 $date = new DateTimeImmutable($subscription->subscribed_at);
                                 $diff = $date->diff(new DateTimeImmutable());
