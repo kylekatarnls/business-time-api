@@ -126,6 +126,55 @@ final class QuotasTest extends TestCase
         $this->assertFalse($ana->hasVerifiedProperties());
         $auth->verify();
         $ana->createAsStripeCustomer();
+        $this->subscribePlan($ana, 'pro', 'yearly');
+        $ana->last_subscribe_at = now();
+        $ana->save();
+        $ana = $this->reloadUser($ana);
+        $this->assertTrue($ana->hasVerifiedProperties());
+        $this->assertTrue($ana->canSubscribeAPlan());
+
+        $this->instance(Quotas::class, new Quotas(
+            [80, 100],
+            [90, 100],
+            static fn() => [$ana, $bob],
+        ));
+
+        $getCountFile = new ReflectionMethod(ApiAuthorization::class, 'getCountFile');
+        $getCountFile->setAccessible(true);
+        $countFile = $getCountFile->invoke($auth);
+
+        file_put_contents($countFile, '3999');
+
+        $this
+            ->artisan('quotas', ['--verbose' => true])
+            ->expectsOutput('pro: Ana')
+            ->expectsOutput($ana->id.'   '.$ana->email)
+            ->expectsOutput('0 months           0 / 200 000    0%')
+            ->assertExitCode(0);
+
+        Mail::assertNothingSent();
+    }
+
+    public function testQuotasCommandUnlimitedPlan(): void
+    {
+        Mail::fake();
+
+        $ana = $this->newUser('Ana', 'ana@selfbuild.fr');
+        $bob = $this->newUser('Bob', 'bob@selfbuild.fr');
+
+        $this->assertFalse($ana->canSubscribeAPlan());
+        $this->assertFalse($ana->hasVerifiedProperties());
+        /** @var ApiAuthorization $auth */
+        $auth = $ana->apiAuthorizations()->create([
+            'name'  => 'Ana Website',
+            'type'  => 'domain',
+            'value' => 'ana.github.io',
+        ]);
+        $ana = $this->reloadUser($ana);
+        $this->assertFalse($ana->canSubscribeAPlan());
+        $this->assertFalse($ana->hasVerifiedProperties());
+        $auth->verify();
+        $ana->createAsStripeCustomer();
         $this->subscribePlan($ana, 'premium', 'yearly');
         $ana->last_subscribe_at = now();
         $ana->save();
@@ -146,7 +195,7 @@ final class QuotasTest extends TestCase
         file_put_contents($countFile, '3999');
 
         $this
-            ->artisan('quotas', ['--verbose' => true, '--dry-run' => true])
+            ->artisan('quotas', ['--verbose' => true])
             ->expectsOutput('premium: Ana')
             ->expectsOutput($ana->id.'   '.$ana->email)
             ->doesntExpectOutput(' - ana.github.io                          3 999 / 5 000   80%  >=  80%')
