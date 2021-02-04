@@ -265,7 +265,7 @@ final class Quotas extends Command
                 ],
             );
 
-            $this->recordNotification($user->apiAuthorizationQuotaNotifications(), [
+            $this->recordNotification($user->subscriptionQuotaNotifications(), [
                 'subscription_id' => $id,
                 'year' => $year,
                 'month' => $month,

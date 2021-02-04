@@ -338,6 +338,6 @@
     "Quota for :property exceeded :percent%": "Le quota pour :property a dépassé :percent%",
     "The property :property will now be blocked until the end of the month, you can unblock it using the link below:": "La propriété :property est suspendue jusqu'à la fin du mois, vous pouvez la débloquer en utilisant le bouton ci-dessous :",
     "The property :property will be blocked soon, you can raise your monthly limit using the link below:": "La propriété :property va bientôt être suspendue, vous pouvez augmenter la limite mensuelle en utilisant le bouton ci-dessous :",
-    "Your :property subscription will now be blocked until :end, you can unblock it using the link below:": "Votre abonnement :property va bientôt être suspendu jusqu'à :end, vous pouvez le débloquer en utilisant le bouton ci-desous :",
+    "Your :property subscription will now be blocked until :end, you can unblock it using the link below:": "Votre abonnement :property est désormais suspendu jusqu'à :end, vous pouvez le débloquer en utilisant le bouton ci-desous :",
     "Your :property subscription reached :percent%, if you think it may reach 100% before :end, you can raise the limit using the link below:": "Votre abonnement :property a atteint :percent%, si vous pensez qu'il peut atteindre 100% avant :end, vous pouvez augmenter la limite en cliquant sur le bouton ci-dessous :"
 }

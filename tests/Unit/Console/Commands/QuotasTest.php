@@ -5,6 +5,7 @@ namespace Tests\Unit\Console\Commands;
 use App\Console\Commands\Quotas;
 use App\Mail\LimitThreshold;
 use App\Models\ApiAuthorization;
+use Carbon\CarbonImmutable;
 use Carbon\Carbonite\Attribute\Freeze;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -103,7 +104,33 @@ final class QuotasTest extends TestCase
             ->doesntExpectOutput('free: Bob')
             ->assertExitCode(0);
 
-        Mail::assertSent(LimitThreshold::class, 2);
+        file_put_contents($countFile, '5000');
+
+        Log::shouldReceive('info')->with(
+            "Notice to ana@selfbuild.fr\n" .
+            "[Attention] Le quota pour ana.github.io a dépassé 100%\n" .
+            "La propriété ana.github.io est suspendue jusqu'à la fin du mois, " .
+            'vous pouvez la débloquer en utilisant le bouton ci-dessous :',
+        );
+
+        $this
+            ->artisan('quotas', ['--verbose' => true])
+            ->expectsOutput('free: Ana')
+            ->expectsOutput($ana->id . '   ' . $ana->email)
+            ->expectsOutput(' - ana.github.io                          5 000 / 5 000  100%  >=  100%')
+            ->doesntExpectOutput('free: Bob')
+            ->assertExitCode(0);
+
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo('ana@selfbuild.fr'),
+        );
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo(config('app.super_admin')),
+        );
+
+        Mail::assertSent(LimitThreshold::class, 4);
     }
 
     public function testQuotasCommandPaidPlan(): void
@@ -126,7 +153,7 @@ final class QuotasTest extends TestCase
         $this->assertFalse($ana->hasVerifiedProperties());
         $auth->verify();
         $ana->createAsStripeCustomer();
-        $this->subscribePlan($ana, 'pro', 'yearly');
+        $subscription = $this->subscribePlan($ana, 'pro', 'yearly');
         $ana->last_subscribe_at = now();
         $ana->save();
         $ana = $this->reloadUser($ana);
@@ -148,11 +175,80 @@ final class QuotasTest extends TestCase
         $this
             ->artisan('quotas', ['--verbose' => true])
             ->expectsOutput('pro: Ana')
-            ->expectsOutput($ana->id.'   '.$ana->email)
+            ->expectsOutput($ana->id . '   ' . $ana->email)
             ->expectsOutput('0 months           0 / 200 000    0%')
             ->assertExitCode(0);
 
+        $this
+            ->artisan('quotas')
+            ->doesntExpectOutput('pro: Ana')
+            ->doesntExpectOutput($ana->id . '   ' . $ana->email)
+            ->doesntExpectOutput('0 months           0 / 200 000    0%')
+            ->assertExitCode(0);
+
         Mail::assertNothingSent();
+
+        $subscriptionBaseDirectory = __DIR__.'/../../../../data/subscription-count/';
+        $subscriptionDirectory = $subscriptionBaseDirectory . 's' . $subscription->id;
+        @mkdir($subscriptionDirectory, 0777, true);
+        $subscriptionFile = $subscriptionDirectory . '/m0.txt';
+
+        $end = CarbonImmutable::createFromTimestamp($subscription->current_period_end)->isoFormat('LLLL');
+        file_put_contents($subscriptionFile, '188754');
+        $ana = $this->reloadUser($ana);
+
+        Log::shouldReceive('info')->with(
+            "Notice to ana@selfbuild.fr\n" .
+            "Le quota pour Vicopo Pro a dépassé 80%\n" .
+            'Votre abonnement Vicopo Pro a atteint 80%, ' .
+            "si vous pensez qu'il peut atteindre 100% avant $end, vous pouvez augmenter la limite en cliquant sur le bouton ci-dessous :",
+        );
+
+        $this
+            ->artisan('quotas', ['--verbose' => true])
+            ->expectsOutput('pro: Ana')
+            ->expectsOutput($ana->id . '   ' . $ana->email)
+            ->expectsOutput('0 months     188 754 / 200 000   94%')
+            ->expectsOutput(' - Pro                                 188 754 / 200 000   94%  >=  80%')
+            ->assertExitCode(0);
+
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo('ana@selfbuild.fr'),
+        );
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo(config('app.super_admin')),
+        );
+
+        file_put_contents($subscriptionFile, '1588754');
+        $ana = $this->reloadUser($ana);
+
+        Log::shouldReceive('info')->with(
+            "Notice to ana@selfbuild.fr\n" .
+            "[Attention] Le quota pour Vicopo Pro a dépassé 100%\n" .
+            "Votre abonnement Vicopo Pro est désormais suspendu jusqu'à $end, " .
+            "vous pouvez le débloquer en utilisant le bouton ci-desous :",
+        );
+
+        $this
+            ->artisan('quotas', ['--verbose' => true])
+            ->expectsOutput('pro: Ana')
+            ->expectsOutput($ana->id . '   ' . $ana->email)
+            ->expectsOutput('0 months   1 588 754 / 200 000  794%')
+            ->expectsOutput(' - Pro                                 1 588 754 / 200 000  794%  >=  100%')
+            ->assertExitCode(0);
+
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo('ana@selfbuild.fr'),
+        );
+        Mail::assertSent(
+            LimitThreshold::class,
+            static fn(LimitThreshold $mail) => $mail->hasTo(config('app.super_admin')),
+        );
+
+        Mail::assertSent(LimitThreshold::class, 4);
     }
 
     public function testQuotasCommandUnlimitedPlan(): void
@@ -197,7 +293,7 @@ final class QuotasTest extends TestCase
         $this
             ->artisan('quotas', ['--verbose' => true])
             ->expectsOutput('premium: Ana')
-            ->expectsOutput($ana->id.'   '.$ana->email)
+            ->expectsOutput($ana->id . '   ' . $ana->email)
             ->doesntExpectOutput(' - ana.github.io                          3 999 / 5 000   80%  >=  80%')
             ->doesntExpectOutput('free: Bob')
             ->assertExitCode(0);
