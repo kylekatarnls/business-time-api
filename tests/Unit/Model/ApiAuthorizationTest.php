@@ -10,6 +10,9 @@ final class ApiAuthorizationTest extends TestCase
 {
     public function testAuthorization(): void
     {
+        $getCountFile = new ReflectionMethod(ApiAuthorization::class, 'getCountFile');
+        $getCountFile->setAccessible(true);
+
         $ziggy = $this->newZiggy();
 
         /** @var ApiAuthorization $auth */
@@ -18,6 +21,7 @@ final class ApiAuthorizationTest extends TestCase
             'type'  => 'domain',
             'value' => 'music.github.io',
         ]);
+        @unlink($getCountFile->invoke($auth));
 
         $this->assertTrue($auth->accept('music.github.io'));
         $this->assertFalse($auth->accept('https://music.github.io'));
@@ -54,8 +58,6 @@ final class ApiAuthorizationTest extends TestCase
         $this->assertNull($auth->getBlockedCount());
         $auth->verify();
         $this->assertTrue($auth->isVerified());
-        $getCountFile = new ReflectionMethod(ApiAuthorization::class, 'getCountFile');
-        $getCountFile->setAccessible(true);
 
         $auth = ApiAuthorization::find($auth->id);
         file_put_contents($getCountFile->invoke($auth), '123');
@@ -72,6 +74,7 @@ final class ApiAuthorizationTest extends TestCase
             'type'  => 'ip',
             'value' => '5.2.3.6',
         ]);
+        @unlink($getCountFile->invoke($auth));
 
         $this->assertSame(3000, $auth->getFreeLimit(3000));
         $this->assertFalse($auth->accept('music.github.io'));

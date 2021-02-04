@@ -3,6 +3,8 @@
 namespace Tests\Unit\Model;
 
 use App\Models\Plan;
+use App\Models\User;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 final class UserTest extends TestCase
@@ -30,5 +32,34 @@ final class UserTest extends TestCase
 
         $this->assertSame(20_000, $ziggy->getLimit(Plan::fromId('start')));
         $this->assertSame(5_000, $ziggy->getLimit(['start', 'pro']));
+    }
+
+    public function testAddAndSubBalance(): void
+    {
+        $user = $this->newZiggy();
+        $user->createAsStripeCustomer();
+
+        $this->assertSame(0.0, $user->getBalance());
+
+        $user->addBalance(1.5);
+        $user->subBalance(4);
+    }
+
+    public function testAddBalanceException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Negative balance cannot be added, use subBalance() instead.');
+
+        $user = new User();
+        $user->addBalance(-0.3);
+    }
+
+    public function testSubBalanceException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Negative balance cannot be subtracted, use addBalance() instead.');
+
+        $user = new User();
+        $user->subBalance(-553);
     }
 }
