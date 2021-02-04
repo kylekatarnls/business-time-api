@@ -23,6 +23,7 @@ final class ApiAuthorizationTest extends TestCase
         $this->assertFalse($auth->accept('https://music.github.io'));
         $this->assertFalse($auth->accept('5.2.3.6'));
         $this->assertTrue($auth->needsManualVerification());
+        $this->assertSame(3000, $auth->getFreeLimit(3000));
         $this->assertSame([
             'type'  => 'domain',
             'value' => 'music.github.io',
@@ -72,9 +73,15 @@ final class ApiAuthorizationTest extends TestCase
             'value' => '5.2.3.6',
         ]);
 
+        $this->assertSame(3000, $auth->getFreeLimit(3000));
         $this->assertFalse($auth->accept('music.github.io'));
         $this->assertFalse($auth->accept('https://music.github.io'));
         $this->assertTrue($auth->accept('5.2.3.6'));
         $this->assertFalse($auth->needsManualVerification());
+
+        $this->assertNull($auth->getFreeCount());
+        $auth->verify();
+        $auth = ApiAuthorization::find($auth->id);
+        $this->assertSame(0, $auth->getFreeCount());
     }
 }
