@@ -6,6 +6,8 @@ use App\Models\User;
 use Carbon\Bespin;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Cashier\Subscription;
+use Stripe\PaymentMethod;
 use Stripe\StripeClient;
 
 abstract class TestCase extends BaseTestCase
@@ -44,6 +46,37 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $this->stripeClient;
+    }
+
+    protected function getPaymentMethod(): PaymentMethod
+    {
+        $cardExpiration = now()->addMonths(2);
+        $stripe = $this->getStripeClient();
+
+        return $stripe->paymentMethods->create([
+            'type' => 'card',
+            'card' => [
+                'number' => '4242424242424242',
+                'exp_month' => $cardExpiration->month,
+                'exp_year' => $cardExpiration->year,
+                'cvc' => '314',
+            ],
+        ]);
+    }
+
+    public function subscribePlan(
+        User $user,
+        string $planId,
+        string $recurrence,
+        ?string $paymentMethod = null
+    ): Subscription {
+        if ($paymentMethod === null) {
+            $user->updateDefaultPaymentMethod($this->getPaymentMethod());
+        }
+
+        $user->cancelSubscriptionsSilently();
+
+        return $user->subscribePlan($planId, $recurrence, $paymentMethod);
     }
 
     protected function setUp(): void

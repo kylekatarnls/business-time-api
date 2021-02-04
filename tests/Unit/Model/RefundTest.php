@@ -17,20 +17,7 @@ final class RefundTest extends TestCase
         $this->assertTrue($ziggy->hasStripeId());
         $this->assertTrue($ziggy->canSubscribeAPlan());
         $this->assertFalse($ziggy->hasBilling());
-        $cardExpiration = now()->addMonths(2);
-        $stripe = $this->getStripeClient();
-        $paymentMethod = $stripe->paymentMethods->create([
-            'type' => 'card',
-            'card' => [
-                'number' => '4242424242424242',
-                'exp_month' => $cardExpiration->month,
-                'exp_year' => $cardExpiration->year,
-                'cvc' => '314',
-            ],
-        ]);
-        $ziggy->updateDefaultPaymentMethod($paymentMethod);
-        $ziggy->cancelSubscriptionsSilently();
-        $subscription = $ziggy->subscribePlan('premium', 'yearly');
+        $subscription = $this->subscribePlan($ziggy, 'premium', 'yearly');
         $this->assertTrue($ziggy->hasStripeId());
         $this->assertTrue($ziggy->canSubscribeAPlan());
         $this->assertFalse($ziggy->hasBilling());
