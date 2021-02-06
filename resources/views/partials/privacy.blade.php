@@ -61,10 +61,7 @@
 </p>
 <h2 class="text-lg font-bold">Sharing your personal information</h2>
 <p class="my-6">
-    We do not sell, trade, or rent Users personal identification information to others. We may share
-    generic aggregated demographic information not linked to any personal identification information
-    regarding visitors and users with our business partners, trusted affiliates and advertisers for
-    the purposes outlined above.
+    We do not sell, trade, or rent Users personal identification information to others.
 </p>
 <h2 class="text-lg font-bold">Third party websites</h2>
 <p class="my-6">
@@ -77,6 +74,8 @@
     website, including websites which have a link to our Site, is subject to that website's own
     terms and policies.
 </p>
+<?php
+/*
 <h2 class="text-lg font-bold">Advertising</h2>
 <p class="my-6">
     Ads appearing on our site may be delivered to Users by advertising partners, who may set
@@ -86,9 +85,11 @@
     advertisements that they believe will be of most interest to you. This privacy policy does not
     cover the use of cookies by any advertisers.
 </p>
+*/
+?>
 <h2 class="text-lg font-bold">Changes to this privacy policy</h2>
 <p class="my-6">
-    {{ $appName }} has the discretion to update this privacy policy at any time. When we do, we will
+    {{ $appName }} has the discretion to update this privacy policy at any time. If and when we do, we will
     revise the updated date at the bottom of this page. We encourage Users to frequently check this
     page for any changes to stay informed about how we are helping to protect the personal
     information we collect. You acknowledge and agree that it is your responsibility to review this
@@ -104,5 +105,7 @@
 <p class="my-6">
     If you have any questions about this Privacy Policy, the practices of this site, or your
     dealings with this site, <a href="{{ route('contact') }}">please contact us</a>.
-    This document was last updated on December 2020.
+</p>
+<p class="my-6">
+    This document was last updated on February 2021.
 </p>
