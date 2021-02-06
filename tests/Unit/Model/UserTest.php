@@ -195,4 +195,26 @@ final class UserTest extends TestCase
         $this->assertSame([], iterator_to_array($subscriptions));
         $this->assertTrue($ziggy->hasStripeId());
     }
+
+    public function testGetSubscriptionRecurrence(): void
+    {
+        $ziggy = $this->newZiggy();
+        /** @var Subscription $subscription */
+        $subscription = $ziggy->subscriptions()->create([
+            'name' => 'start',
+            'stripe_id' => 1,
+            'stripe_status' => 'active',
+        ]);
+
+        $this->assertNull($ziggy->getSubscriptionRecurrence('pro'));
+        $this->assertNull($ziggy->getSubscriptionRecurrence('start'));
+        $subscription->stripe_plan = config('plan.start.price.monthly');
+        $subscription->save();
+        $ziggy = $this->reloadUser($ziggy);
+        $this->assertSame('monthly', $ziggy->getSubscriptionRecurrence('start'));
+        $subscription->name = 'yek';
+        $subscription->save();
+        $ziggy = $this->reloadUser($ziggy);
+        $this->assertNull($ziggy->getSubscriptionRecurrence('start'));
+    }
 }
