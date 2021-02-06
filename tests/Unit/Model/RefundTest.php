@@ -34,7 +34,7 @@ final class RefundTest extends TestCase
 
         $ziggy = $this->reloadUser($ziggy);
 
-        $ziggy->refundUntil(1.50);
+        $this->assertNull($ziggy->refundUntil(1.50));
 
         $amounts = [];
 
@@ -102,5 +102,8 @@ final class RefundTest extends TestCase
                 'currency' => 'eur',
             ],
         ], $amounts);
+
+        $this->assertNull($ziggy->refundUntil(0));
+        $this->assertNull($ziggy->refundUntil(-1));
     }
 }
