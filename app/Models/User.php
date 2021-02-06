@@ -365,9 +365,17 @@ final class User extends Authenticatable
             return null;
         }
 
+        $id = $this->subscriptions->where('stripe_status', 'active')->first()?->id;
+
+        if (!$id) {
+            $userId = $this->id;
+            Log::warning("No subscription id found while age = $subscriptionAge for user $userId");
+
+            return 0;
+        }
+
         $subscriptionBaseDirectory = __DIR__ . '/../../data/subscription-count/';
-        $subscriptionDirectory = $subscriptionBaseDirectory . 's' .
-            $this->subscriptions->where('stripe_status', 'active')->first()->id;
+        $subscriptionDirectory = $subscriptionBaseDirectory . 's' . $id;
         $subscriptionFile = $subscriptionDirectory . '/m' . $subscriptionAge . '.txt';
 
         return (int) @file_get_contents($subscriptionFile);

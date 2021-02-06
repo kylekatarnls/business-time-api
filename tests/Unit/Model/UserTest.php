@@ -263,11 +263,25 @@ final class UserTest extends TestCase
         $ziggy = $this->reloadUser($ziggy);
 
         $this->assertSame(0.0, $ziggy->getPlanRatio());
+        $this->assertSame(0.1, $ziggy->getUnverifiedPlanRatio());
 
         $auth->verify();
         $ziggy = $this->reloadUser($ziggy);
 
         $this->assertSame(0.1, $ziggy->getPlanRatio());
+        $this->assertSame(0.1, $ziggy->getUnverifiedPlanRatio());
+        $this->assertSame(0.0, $ziggy->getUnverifiedPlanRatio('start'));
+
+        $ziggy->createAsStripeCustomer();
+        $subscription = $this->subscribePlan($ziggy, 'start', 'monthly');
+        $directory = __DIR__ . '/../../../data/subscription-count/s' . $subscription->id;
+        @mkdir($directory, recursive: true);
+        $file = $directory . '/m0.txt';
+        file_put_contents($file, '26359');
+        $ziggy = $this->reloadUser($ziggy);
+
+        $this->assertSame(1.31795, $ziggy->getPlanRatio());
+        $this->assertSame(1.31795, $ziggy->getUnverifiedPlanRatio('start'));
     }
 
     public function testGetCardIcon(): void
