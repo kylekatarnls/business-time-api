@@ -380,7 +380,7 @@ final class User extends Authenticatable
         $plan = $planData[$planId] ?? null;
 
         if ($planId) {
-            return $this->getPaidRequests() / ($plan['limit']);
+            return $this->getPaidRequests() / $plan['limit'];
         }
 
         return $this->apiAuthorizations->reduce(

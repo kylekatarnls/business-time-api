@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use Laravel\Cashier\Exceptions\InvalidCustomer;
 use Laravel\Cashier\Subscription;
+use ReflectionMethod;
 use ReflectionProperty;
 use Stripe\Collection;
 use Tests\TestCase;
@@ -222,12 +223,61 @@ final class UserTest extends TestCase
     {
         $ziggy = $this->newZiggy();
         $this->assertNull($ziggy->getActiveSubscription());
+        $this->assertNull($ziggy->getCurrentActiveSubscriptionAge());
+        $this->assertNull($ziggy->getPaidRequests());
         $ziggy->clearActiveSubscriptionCache();
         $ziggy->createAsStripeCustomer();
         $this->assertNull($ziggy->getActiveSubscription());
+        $this->assertNull($ziggy->getCurrentActiveSubscriptionAge());
+        $this->assertNull($ziggy->getPaidRequests());
         $subscription = $this->subscribePlan($ziggy, 'start', 'monthly');
         $this->assertNull($ziggy->getActiveSubscription());
+        $this->assertNull($ziggy->getCurrentActiveSubscriptionAge());
+        $this->assertNull($ziggy->getPaidRequests());
         $ziggy->clearActiveSubscriptionCache();
         $this->assertSame($subscription->stripe_id, $ziggy->getActiveSubscription()->id);
+        $this->assertSame(0, $ziggy->getCurrentActiveSubscriptionAge());
+        $this->assertSame(0, $ziggy->getPaidRequests());
+    }
+
+    public function testGetPlanRatio(): void
+    {
+        $getCountFile = new ReflectionMethod(ApiAuthorization::class, 'getCountFile');
+        $getCountFile->setAccessible(true);
+
+        $ziggy = $this->newZiggy();
+
+        $this->assertSame(0.0, $ziggy->getPlanRatio());
+
+        /** @var ApiAuthorization $auth */
+        $auth = $ziggy->apiAuthorizations()->create([
+            'name'  => 'Website',
+            'type'  => 'domain',
+            'value' => 'web.github.io',
+        ]);
+        $ziggy = $this->reloadUser($ziggy);
+
+        $this->assertSame(0.0, $ziggy->getPlanRatio());
+
+        file_put_contents($getCountFile->invoke($auth), '500');
+        $ziggy = $this->reloadUser($ziggy);
+
+        $this->assertSame(0.0, $ziggy->getPlanRatio());
+
+        $auth->verify();
+        $ziggy = $this->reloadUser($ziggy);
+
+        $this->assertSame(0.1, $ziggy->getPlanRatio());
+    }
+
+    public function testGetCardIcon(): void
+    {
+        $appUrl = config('app.url');
+        $ziggy = $this->newZiggy();
+        $this->assertSame($appUrl . '/img/unknown.png', $ziggy->getCardIcon());
+        $ziggy->createAsStripeCustomer();
+        $this->subscribePlan($ziggy, 'start', 'monthly');
+        $ziggy->clearActiveSubscriptionCache();
+        $this->assertSame($appUrl . '/img/visa.png', $ziggy->getCardIcon());
     }
 }
