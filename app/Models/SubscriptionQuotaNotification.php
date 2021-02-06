@@ -16,6 +16,8 @@ use Laravel\Cashier\Subscription;
  * @property int $user_id
  * @property int $subscription_id
  * @property Carbon $created_at
+ * @property User $user
+ * @property Subscription $subscription
  */
 class SubscriptionQuotaNotification extends Model
 {
