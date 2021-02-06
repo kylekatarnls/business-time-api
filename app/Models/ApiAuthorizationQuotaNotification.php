@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property int $api_authorization_id
  * @property Carbon $created_at
+ * @property User $user
+ * @property ApiAuthorization $apiAuthorization
  */
 class ApiAuthorizationQuotaNotification extends Model
 {
