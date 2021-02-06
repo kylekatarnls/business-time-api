@@ -54,8 +54,10 @@ final class UserTest extends TestCase
 
         $this->assertSame(0.0, $user->getBalance());
 
+        $user->addBalance(0.0025);
         $user->addBalance(1.5);
         $user->subBalance(4);
+        $user->subBalance(0.0099);
     }
 
     public function testAddBalanceException(): void
@@ -217,6 +219,7 @@ final class UserTest extends TestCase
         $subscription->save();
         $ziggy = $this->reloadUser($ziggy);
         $this->assertNull($ziggy->getSubscriptionRecurrence('start'));
+        $this->assertNull($ziggy->getSubscriptionRecurrence('yek'));
     }
 
     public function testGetActiveSubscription(): void
