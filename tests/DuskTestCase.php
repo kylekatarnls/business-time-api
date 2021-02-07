@@ -2,11 +2,15 @@
 
 namespace Tests;
 
+use Closure;
+use Exception;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
+use Throwable;
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -45,5 +49,22 @@ abstract class DuskTestCase extends BaseTestCase
                 ChromeOptions::CAPABILITY, $options
             )
         );
+    }
+
+    public function browse(Closure $callback)
+    {
+        parent::browse(static function (Browser $browser) use ($callback) {
+            try {
+                $callback($browser);
+            } catch (Throwable $throwable) {
+                echo $throwable->getMessage() . "\n";
+                echo $throwable->getFile() . ':' . $throwable->getLine() . "\n";
+                echo $throwable->getTraceAsString() . "\n\n";
+
+                $browser->dump();
+
+                throw $throwable;
+            }
+        });
     }
 }
