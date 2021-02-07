@@ -16,9 +16,14 @@ abstract class TestCase extends BaseTestCase
 
     protected ?StripeClient $stripeClient = null;
 
-    protected function newUser(string $name, string $email, array $properties = []): User
+    protected function removeUserByEmail(string $email): void
     {
         User::where(['email' => $email])->forceDelete();
+    }
+
+    protected function newUser(string $name, string $email, array $properties = []): User
+    {
+        $this->removeUserByEmail($email);
 
         return User::create(array_merge([
             'name'     => $name,
