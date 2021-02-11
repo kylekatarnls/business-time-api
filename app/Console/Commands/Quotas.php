@@ -16,6 +16,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Log;
+use Laravel\Cashier\Subscription;
 
 final class Quotas extends Command
 {
@@ -154,7 +155,7 @@ final class Quotas extends Command
                     && $percentage >= $threshold,
             );
 
-            if (count($nextSteps)) {
+            if (count($nextSteps) && !$this->isAuthorizationPaid($authorization->type, $authorization->value)) {
                 $threshold = max($nextSteps);
 
                 $this->writeLine(
@@ -192,6 +193,18 @@ final class Quotas extends Command
         }
 
         $this->writeLine();
+    }
+
+    private function isAuthorizationPaid(string $type, string $value): bool
+    {
+        $userIds = ApiAuthorization::where(['type' => $type, 'value' => $value])
+            ->distinct('user_id')
+            ->get('user_id')
+            ->map(static fn (ApiAuthorization $auth) => $auth->user_id);
+
+        return Subscription::whereIn('user_id', $userIds)
+            ->where('stripe_status', 'active')
+            ->count() > 0;
     }
 
     private function checkSubscription(User $user, Plan $plan): void
