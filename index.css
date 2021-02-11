@@ -67,6 +67,9 @@ h1 {
 	line-height: 1.4em;
 	tab-size: 2;
 }
+.example.no-header pre {
+    margin: -15px;
+}
 .json .key,
 .url .key{
 	font-weight: bold;

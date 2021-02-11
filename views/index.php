@@ -38,7 +38,7 @@
     Placez le code ci-dessus n'importe où sur votre page,
     et insérez le script après jQuery (par exemple avant <code>&lt;/body&gt;</code>) :
 </p>
-<div class="example static">
+<div class="example static no-header">
     <pre class="json"><span class="tag">&lt;script</span> <span class="key">src</span>=<span class="string">"https://code.jquery.com/jquery-3.5.1.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="tag">&lt;script</span> <span class="key">src</span>=<span class="string">"vicopo.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span></pre>
 </div>
