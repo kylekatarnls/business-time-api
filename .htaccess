@@ -10,6 +10,7 @@ RewriteCond %{QUERY_STRING} !(city|code|search)=
 RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R,L]
 
 RewriteRule ^(api(\.min)?\.js)$ vicopo/$1 [L]
+RewriteRule ^vicopo((\.min)?\.js)$ vicopo/api$1 [L]
 RewriteRule ^code-postal/(.+)$ index.php?code=$1 [L,QSA]
 RewriteRule ^ville/(.+)$ index.php?city=$1 [L,QSA]
 RewriteRule ^(re)?chercher?/(.+)$ index.php?search=$2 [L,QSA]
