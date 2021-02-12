@@ -75,7 +75,7 @@ jobs:
       - name: Install Composer Dependencies
         run: |
           composer install;
-          composer require --dev "orchestra/testbench-dusk";
+          composer require --dev "orchestra/testbench-dusk" --with-all-dependencies;
 
       - name: Install NPM Dependencies
         run: npm install
