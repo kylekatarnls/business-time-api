@@ -13,7 +13,7 @@ final class LoginTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $this->assertResponseStatus($response, 200);
         $response->assertSeeText('Adresse e-mail');
         $response->assertSeeText('Mot de passe');
         $response->assertSeeText('Se souvenir de moi');
@@ -41,7 +41,7 @@ final class LoginTest extends TestCase
     {
         $response = $this->actingAs($this->newZiggy())->get('/login');
 
-        $response->assertStatus(302);
+        $this->assertResponseStatus($response, 302);
         $response->assertRedirect(RouteServiceProvider::HOME);
     }
 }

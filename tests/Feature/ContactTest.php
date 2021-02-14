@@ -12,7 +12,7 @@ final class ContactTest extends TestCase
     {
         $response = $this->get('/contact');
 
-        $response->assertStatus(200);
+        $this->assertResponseStatus($response,200);
         $response->assertSeeText('Adresse e-mail');
         $response->assertSeeText('Message');
         $response->assertSeeText('Envoyer');

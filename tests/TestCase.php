@@ -6,6 +6,7 @@ use App\Models\User;
 use Carbon\Bespin;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
 use Laravel\Cashier\Subscription;
 use Stripe\PaymentMethod;
 use Stripe\StripeClient;
@@ -15,6 +16,20 @@ abstract class TestCase extends BaseTestCase
     use CreatesApplication;
 
     protected ?StripeClient $stripeClient = null;
+
+    protected function setUp(): void
+    {
+        Bespin::up($this);
+
+        parent::setUp();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Bespin::down();
+    }
 
     protected function removeUserByEmail(string $email): void
     {
@@ -84,17 +99,15 @@ abstract class TestCase extends BaseTestCase
         return $user->subscribePlan($planId, $recurrence, $paymentMethod);
     }
 
-    protected function setUp(): void
+    public function assertResponseStatus(TestResponse $response, $status): TestResponse
     {
-        Bespin::up($this);
+        $actual = $response->getStatusCode();
 
-        parent::setUp();
-    }
+        $this->assertSame(
+            $actual, $status,
+            "Expected status code {$status} but received {$actual}.\nBody:\n" . $response->getContent(),
+        );
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        Bespin::down();
+        return $response;
     }
 }

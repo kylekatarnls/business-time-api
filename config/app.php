@@ -141,7 +141,7 @@ return [
     'grace' => [
         'enabled' => (bool) env('FEATURE_GRACE', true),
         'days' => (int) env('GRACE_DAYS', 7),
-        'unlimited' => array_filter(explode(',', env('UNLIMITED_GRACE'))),
+        'unlimited' => array_values(array_filter(explode(',', env('UNLIMITED_GRACE') ?? ''))),
     ],
 
     'super_admin' => env('SUPER_ADMIN', 'nobody'),

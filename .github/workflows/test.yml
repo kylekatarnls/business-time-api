@@ -60,7 +60,10 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
-        run: composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }}
+        run: |
+          composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }} --no-scripts;
+          php tests/fix-compatibility.php;
+          composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }};
 
       - name: Initialize Environment
         run: |
