@@ -13,7 +13,13 @@ final class AdminControllerTest extends TestCase
     {
         $ziggy = $this->newZiggy();
         $controller = new AdminController();
-        $view = $controller->users()->render();
+        try {
+            $view = $controller->users()->render();
+        } catch (\Throwable $e) {
+            echo $e->getFile() . ':' . $e->getLine() . "\n";
+            echo $e->getTraceAsString();
+            exit(1);
+        }
 
         $this->assertStringContainsString('David Bowie', $view);
         $this->assertMatchesRegularExpression(

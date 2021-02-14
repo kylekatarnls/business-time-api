@@ -15,6 +15,13 @@ use Tests\TestCase;
 
 final class QuotasTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        ApiAuthorization::where('value', 'ana.github.io')->delete();
+    }
+
     public function testQuotasCommandFreePlan(): void
     {
         Mail::fake();
