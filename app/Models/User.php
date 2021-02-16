@@ -21,6 +21,7 @@ use Laravel\Cashier\Subscription as CashierSubscription;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Stripe\Exception\ApiConnectionException;
 use Stripe\Refund as StripeRefund;
 use Stripe\Subscription;
 use Throwable;
@@ -191,8 +192,23 @@ final class User extends Authenticatable
      */
     public function getCustomerSubscriptions()
     {
+        for ($i = 0; $i < 3; $i++) {
+            try {
+                $customer = $this->asStripeCustomer();
+            } catch (ApiConnectionException $exception) {
+                $customer = null;
+                Log::warning($exception);
+            }
+
+            if ($customer) {
+                break;
+            }
+
+            sleep(1);
+        }
+
         /** @var Subscription[] $subscriptions */
-        $subscriptions = $this->asStripeCustomer()->subscriptions;
+        $subscriptions = $customer->subscriptions;
 
         return $subscriptions;
     }
@@ -307,7 +323,7 @@ final class User extends Authenticatable
     {
         if (!$this->activeSubscriptionCached) {
             $this->activeSubscription = $this->hasStripeId()
-                ? collect(iterator_to_array($this->asStripeCustomer()->subscriptions))
+                ? collect(iterator_to_array($this->getCustomerSubscriptions()))
                     ->where('status', 'active')->last()
                 : null;
             $this->activeSubscriptionCached = true;
