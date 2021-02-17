@@ -145,8 +145,8 @@ $data = $pdo->query(
         : '
 	SELECT CONCAT(`date`, \' 01:PM\'), `count`
 	FROM `daily_log`
-	ORDER BY `date`
 	WHERE `date` > DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+	ORDER BY `date`
  	LIMIT ' . GLOBAL_INTERVAL
 )->fetchAll(PDO::FETCH_NUM);
 
