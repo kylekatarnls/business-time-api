@@ -178,7 +178,7 @@ $domains = $pdo->query(
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
         : '
-    SELECT SUM(`count`) AS count
+    SELECT SUM(`count`) AS `count`, `value` AS `domain`
     FROM `daily_filtered_log`
     WHERE `key` = "domain"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
@@ -197,7 +197,7 @@ $ips = $pdo->query(
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
         : '
-    SELECT SUM(`count`) AS count
+    SELECT SUM(`count`) AS `count`, `value` AS `ip`
     FROM `daily_filtered_log`
     WHERE `key` = "ip"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
@@ -217,7 +217,7 @@ $codes = $pdo->query(
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
         : '
-    SELECT SUM(`count`) AS count
+    SELECT SUM(`count`) AS `count`, `value` AS `code`
     FROM `daily_filtered_log`
     WHERE `key` = "code"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
@@ -237,7 +237,7 @@ $villes = $pdo->query(
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
         : '
-    SELECT SUM(`count`) AS count
+    SELECT SUM(`count`) AS `count`, `value` AS `ville`
     FROM `daily_filtered_log`
     WHERE `key` = "ville"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
