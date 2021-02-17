@@ -182,7 +182,9 @@ $domains = $pdo->query(
     FROM `daily_filtered_log`
     WHERE `key` = "domain"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
-    GROUP BY `value`'
+    GROUP BY `value`
+	ORDER BY `count` DESC
+	LIMIT ' . GLOBAL_TOP
 )->fetchAll(PDO::FETCH_OBJ);
 
 $ips = $pdo->query(
@@ -201,7 +203,9 @@ $ips = $pdo->query(
     FROM `daily_filtered_log`
     WHERE `key` = "ip"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
-    GROUP BY `value`'
+    GROUP BY `value`
+	ORDER BY `count` DESC
+	LIMIT ' . GLOBAL_TOP
 )->fetchAll(PDO::FETCH_OBJ);
 
 $codes = $pdo->query(
@@ -221,7 +225,9 @@ $codes = $pdo->query(
     FROM `daily_filtered_log`
     WHERE `key` = "code"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
-    GROUP BY `value`'
+    GROUP BY `value`
+	ORDER BY `count` DESC
+	LIMIT ' . GLOBAL_TOP
 )->fetchAll(PDO::FETCH_OBJ);
 
 $villes = $pdo->query(
@@ -241,7 +247,9 @@ $villes = $pdo->query(
     FROM `daily_filtered_log`
     WHERE `key` = "ville"
     AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
-    GROUP BY `value`'
+    GROUP BY `value`
+	ORDER BY `count` DESC
+	LIMIT ' . GLOBAL_TOP
 )->fetchAll(PDO::FETCH_OBJ);
 
 ?>
