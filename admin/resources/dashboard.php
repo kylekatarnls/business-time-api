@@ -116,7 +116,7 @@ $data = $pdo->query(
     HAS_FILTER
         ? '
 	SELECT
-		CONCAT(DATE(d.`date`), \' 01:PM\'),
+		CONCAT(DATE(d.`date`), \' 01:00 PM\'),
 		COUNT(l.`id`)
 	FROM (
 		SELECT start_date + INTERVAL num DAY `date` FROM
@@ -143,7 +143,7 @@ $data = $pdo->query(
 	ORDER BY d.`date`
 	LIMIT ' . GLOBAL_INTERVAL
         : '
-	SELECT CONCAT(`date`, \' 01:PM\'), `count`
+	SELECT CONCAT(`date`, \' 01:00 PM\'), `count`
 	FROM `daily_log`
 	WHERE `date` > DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
 	ORDER BY `date`
@@ -154,7 +154,21 @@ foreach ($data as &$d) {
 	$d[1] |= 0;
 }
 
-$domains = $pdo->query('
+if (!HAS_FILTER) {
+    $today = date('Y-m-d');
+    $data[] = [
+        "$today 01:00 PM",
+        (int) $pdo->query('
+            SELECT COUNT(`id`)
+	        FROM `log`
+            WHERE `date` = "' . $today . '"
+        ')->fetchColumn(),
+    ];
+}
+
+$domains = $pdo->query(
+    HAS_FILTER
+        ? '
 	SELECT
 		l.domain,
 		COUNT(*) AS count
@@ -163,9 +177,17 @@ $domains = $pdo->query('
 	GROUP BY l.domain
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
+        : '
+    SELECT SUM(`count`) AS count
+    FROM `daily_filtered_log`
+    WHERE `key` = "domain"
+    AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+    GROUP BY `value`'
 )->fetchAll(PDO::FETCH_OBJ);
 
-$ips = $pdo->query('
+$ips = $pdo->query(
+    HAS_FILTER
+        ? '
 	SELECT
 		l.ip,
 		COUNT(*) AS count
@@ -174,9 +196,17 @@ $ips = $pdo->query('
 	GROUP BY l.ip
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
+        : '
+    SELECT SUM(`count`) AS count
+    FROM `daily_filtered_log`
+    WHERE `key` = "ip"
+    AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+    GROUP BY `value`'
 )->fetchAll(PDO::FETCH_OBJ);
 
-$codes = $pdo->query('
+$codes = $pdo->query(
+    HAS_FILTER
+        ? '
 	SELECT
 		l.code,
 		COUNT(*) AS count
@@ -186,9 +216,17 @@ $codes = $pdo->query('
 	GROUP BY l.code
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
+        : '
+    SELECT SUM(`count`) AS count
+    FROM `daily_filtered_log`
+    WHERE `key` = "code"
+    AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+    GROUP BY `value`'
 )->fetchAll(PDO::FETCH_OBJ);
 
-$villes = $pdo->query('
+$villes = $pdo->query(
+    HAS_FILTER
+        ? '
 	SELECT
 		l.ville,
 		COUNT(*) AS count
@@ -198,6 +236,12 @@ $villes = $pdo->query('
 	GROUP BY l.ville
 	ORDER BY count DESC
 	LIMIT ' . GLOBAL_TOP
+        : '
+    SELECT SUM(`count`) AS count
+    FROM `daily_filtered_log`
+    WHERE `key` = "ville"
+    AND `date` >= DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+    GROUP BY `value`'
 )->fetchAll(PDO::FETCH_OBJ);
 
 ?>
