@@ -144,10 +144,10 @@ $data = $pdo->query(
 	LIMIT ' . GLOBAL_INTERVAL
         : '
 	SELECT CONCAT(`date`, \' 01:PM\'), `count`
-	FROM `daily_log` As l
+	FROM `daily_log`
 	ORDER BY `date`
-	WHERE ' . GLOBAL_WHERE . '
-	LIMIT ' . GLOBAL_INTERVAL
+	WHERE `date` > DATE(DATE_SUB(NOW(), INTERVAL ' . GLOBAL_INTERVAL . ' DAY))
+ 	LIMIT ' . GLOBAL_INTERVAL
 )->fetchAll(PDO::FETCH_NUM);
 
 foreach ($data as &$d) {
