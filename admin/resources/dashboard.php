@@ -161,7 +161,7 @@ if (!HAS_FILTER) {
         (int) $pdo->query('
             SELECT COUNT(`id`)
 	        FROM `log`
-            WHERE `date` = "' . $today . '"
+            WHERE DATE(`date`) = "' . $today . '"
         ')->fetchColumn(),
     ];
 }
