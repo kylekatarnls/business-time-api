@@ -54,7 +54,7 @@ try {
     }
 
     try {
-        define('REFERER', $_SERVER['HTTP_REFERER'] ?? '');
+        define('REFERER', ($_SERVER['HTTP_REFERER'] ?? '') ?: $_SERVER['HTTP_ORIGIN']);
         define('DOMAIN', preg_split('#[/:]#', preg_replace('`^[a-zA-Z0-9]+://`', '', REFERER))[0]);
 
         if (isset($_GET['search']) && !isset($_GET['city'], $_GET['code'])) {
