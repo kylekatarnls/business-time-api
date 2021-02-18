@@ -86,7 +86,7 @@ for ($i = GLOBAL_INTERVAL; $i > 0; $i--) {
                 $pdo->prepare('
                     INSERT INTO `daily_filtered_log` (`date`, `key`, `value`, `count`)
                     VALUES(?, ?, ?, ?)
-                ')->execute([$day, $key, $value, $count]);
+                ')->execute([$day, $key, substr($value, 0, 220), $count]);
             }
 
             $query->closeCursor();
