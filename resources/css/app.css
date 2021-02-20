@@ -78,6 +78,14 @@
     background-color: #fefde5 !important;
 }
 
+.copy-clipboard {
+    margin-bottom: -40px;
+    position: relative;
+    top: 12px;
+    right: 12px;
+    cursor: pointer;
+}
+
 .sk-chase {
     width: 40px;
     height: 40px;

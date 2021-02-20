@@ -159,7 +159,8 @@
     "\":value\" is already registered.": "\":value\" est déjà enregistré.",
     "Before you can start to use \":value\", we need to verify you own it. Please download the following file :link and upload it to make it available at the URL :url (or equivalent with https, \".well-known\" directory is also optional).": "Avant que vous puissiez commencer à utiliser \":value\", nous devons vérifier que vous en êtes le propriétaire. Veuillez télécharger le fichier :link et le publier pour le rendre accessible à l'URL :url (ou l'équivalent en https, le dossier \".well-known\" est également optionnel).",
     "Before you can start to use \":value\", we need to verify you own it. Please send a GET request from within your server (using <code>wget</code>, <code>curl</code> or any tool) to :link with the same IP address exposed as sender.": "Avant que vous puissiez commencer à utiliser \":value\", nous devons vérifier que vous en êtes le propriétaire. Veuillez envoyer une requête GET depuis votre serveur (en utilisant <code>wget</code>, <code>curl</code> ou autre) vers :link avec la même adresse IP exposée en tant que client.",
-    "The token :token is not for the exposed IP(s): :ip. Please access this URL from within your server with the IP you want to verify.": "Le jeton :token n'est pas pour la/les IP(s): :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP que vous souhaitez vérifier.",
+    "The token :token is not for the exposed IP address: :ip. Please access this URL from within your server with the IP you want to verify.|The token :token is not for any of the exposed IP addresses: :ip. Please access this URL from within your server with the IP you want to verify.": "Le jeton :token n'est pas pour l'adresse IP: :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP que vous souhaitez vérifier.|Le jeton :token n'est pour aucune des adresses IP : :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP que vous souhaitez vérifier.",
+    "The token :token is not for the exposed IP address: :ip. Please access this URL from within your server with the IP :expected.|The token :token is not for any of the exposed IP addresses: :ip. Please access this URL from within your server with the IP :expected.": "Le jeton :token n'est pas pour l'adresse IP: :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP :expected.|Le jeton :token n'est pour aucune des adresses IP : :ip. Veuillez accéder à cet URL depuis votre serveur avec l'IP :expected.",
     "Unable to verify due to unknown error, please retry.": "Une erreur inconnue s'est produite lors de la vérification, veuillez réessayer.",
     "Verify": "Vérifier",
     "IP addresses needs to be verified by call from inside the server.": "Les adresses IP doivent être vérifiées depuis l'intérieur du serveur.",
@@ -341,5 +342,12 @@
     "Your :property subscription will now be blocked until :end, you can unblock it using the link below:": "Votre abonnement :property est désormais suspendu jusqu'à :end, vous pouvez le débloquer en utilisant le bouton ci-desous :",
     "Your :property subscription reached :percent%, if you think it may reach 100% before :end, you can raise the limit using the link below:": "Votre abonnement :property a atteint :percent%, si vous pensez qu'il peut atteindre 100% avant :end, vous pouvez augmenter la limite en cliquant sur le bouton ci-dessous :",
     "Use the top level domain :domain to include any sub-domain.": "Utiliser le domaine de premier niveau :domain pour inclure tous les sous-domaines.",
-    "Analytics": "Statistiques"
+    "Analytics": "Statistiques",
+    "Server verified": "Serveur vérifié",
+    "Server verification failure": "Échec de la vérification du serveur",
+    "IP address :ip confirmed for your server.": "Adresse IP :ip confirmée pour votre serveur.",
+    "IP address seen: :ips|IP addresses seen: :ips": "Adresse IP visible : :ips|Adresses IP visibles : :ips",
+    "Expected IP address: :ip": "Adresse IP attendue : :ip",
+    "Log in your server (using SSH for instance) and call the URL using this command:": "Connectez-vous à votre serveur (en SSH par exemple) et appelez l'URL en exécutant cette command :",
+    "Command copied.": "Commande copiée."
 }
