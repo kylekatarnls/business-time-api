@@ -44,7 +44,11 @@ Route::middleware(['admin'])->group(static function () {
 });
 
 Route::redirect('/.well-known/change-password', '/user/profile#change-password');
-Route::get('/verify-ip/{email}/{token}.html', [AuthorizationController::class, 'verifyIp'])->name('verify-ip');
+Route::get('/verify-ip/{email}/{token}.html', [AuthorizationController::class, 'verifyIp'])
+    ->name('verify-ip-token');
+Route::get('/verify-ip/{email}/{token}/{ip}.html', [AuthorizationController::class, 'verifyIp'])
+    ->where('ip', '\d+(\.\d+){3}')
+    ->name('verify-ip');
 Route::get('/contact', [Controller::class, 'contact'])->name('contact');
 
 Route::middleware(['throttle:53,10'])->group(function () {

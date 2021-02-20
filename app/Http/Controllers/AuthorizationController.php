@@ -8,11 +8,14 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Response as ResponseFacade;
+use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\AcceptHeader;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 final class AuthorizationController extends AbstractController
 {
@@ -92,16 +95,26 @@ final class AuthorizationController extends AbstractController
         ]);
     }
 
-    public function verifyIp(Request $request, string $email, string $token): bool
+    private function preferHtml(Request $request): bool
     {
+        foreach ($request->getAcceptableContentTypes() as $type) {
+            if (Str::contains($type, 'html')) {
+                return true;
+            }
+
+            if ($type === '*' || $type === '*/*') {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    public function verifyIp(Request $request, string $email, string $token, ?string $ip = null): Response
+    {
+        $preferHtml = $this->preferHtml($request);
         $ips = array_unique($request->getClientIps());
-        /** @var User $user */
-        $user = User::where(['email' => $email])->first();
-        /** @var ApiAuthorization[] $authorizations */
-        $authorizations = $user->apiAuthorizations()
-            ->where('type', 'ip')
-            ->whereIn('value', $request->getClientIps())
-            ->get();
+        $authorizations = $this->getVerifiableAuthorizations($ips, $email, $ip);
 
         foreach ($authorizations as $authorization) {
             if ($authorization->getVerificationToken() === $token) {
@@ -113,18 +126,29 @@ final class AuthorizationController extends AbstractController
 
                 self::clearCache('ip', $authorization->value);
 
-                return true;
+                if ($preferHtml) {
+                    return ResponseFacade::view('ip-authorized', ['authorization' => $authorization]);
+                }
+
+                return ResponseFacade::make('OK');
             }
         }
 
-        $ips = implode(', ', $ips);
+        $count = count($ips);
+        $interpolations = [
+            'token'    => $token,
+            'ip'       => implode(', ', $ips),
+            'expected' => $ip
+        ];
+        $error = $ip
+            ? trans_choice('The token :token is not for the exposed IP address: :ip. Please access this URL from within your server with the IP :expected.|The token :token is not for any of the exposed IP addresses: :ip. Please access this URL from within your server with the IP :expected.', $count, $interpolations)
+            : trans_choice('The token :token is not for the exposed IP address: :ip. Please access this URL from within your server with the IP you want to verify.|The token :token is not for any of the exposed IP addresses: :ip. Please access this URL from within your server with the IP you want to verify.', $count, $interpolations);
 
-        throw new FileException(
-            __('The token :token is not for the exposed IP(s): :ip. Please access this URL from within your server with the IP you want to verify.', [
-                'token' => $token,
-                'ip' => $ips,
-            ])
-        );
+        $response = $preferHtml
+            ? $this->getIpVerificationFailureView($error, $ips, $email, $token, $ip)
+            : ResponseFacade::make(__('Error') . "\n$error");
+
+        return $response->setStatusCode(401);
     }
 
     private static function getUnsecureContent(string $url): string
@@ -190,5 +214,60 @@ final class AuthorizationController extends AbstractController
         self::clearCache($authorization->type, $authorization->value);
 
         return null;
+    }
+
+    /**
+     * @param string[]    $ips
+     * @param string      $email
+     * @param string      $token
+     * @param string|null $ip
+     *
+     * @return ApiAuthorization[]
+     */
+    private function getVerifiableAuthorizations(array $ips, string $email, ?string $ip): Collection
+    {
+        if ($ip) {
+            $ips = in_array($ip, $ips) ? [$ip] : [];
+        }
+
+        if (!count($ips)) {
+            return collect([]);
+        }
+
+        /** @var User $user */
+        $user = User::where(['email' => $email])->first();
+
+        return $user->apiAuthorizations()
+            ->where('type', 'ip')
+            ->whereIn('value', $ips)
+            ->get();
+    }
+
+    /**
+     * @param string      $error
+     * @param string[]    $ips
+     * @param string      $email
+     * @param string      $token
+     * @param string|null $ip
+     *
+     * @return Response
+     */
+    private function getIpVerificationFailureView(string $error, array $ips, string $email, string $token, ?string $ip): Response
+    {
+        return ResponseFacade::view('ip-authorization-failure', [
+            'ip'    => $ip,
+            'ips'   => $ips,
+            'error' => $error,
+            'url'   => $ip
+                ? route('verify-ip', [
+                    'email' => urlencode($email),
+                    'token' => $token,
+                    'ip'    => $ip,
+                ])
+                : route('verify-ip-token', [
+                    'email' => urlencode($email),
+                    'token' => $token,
+                ]),
+        ]);
     }
 }
