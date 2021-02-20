@@ -13,7 +13,7 @@ class UniquenessOfValuePerUser extends Migration
      */
     public function up()
     {
-        Schema::table('api_authorizations', function (Blueprint $table) {
+        Schema::table('api_authorizations', static function (Blueprint $table) {
             $table->unique(['value', 'user_id'], 'unique_value_per_user');
         });
     }
@@ -25,7 +25,7 @@ class UniquenessOfValuePerUser extends Migration
      */
     public function down()
     {
-        Schema::table('api_authorizations', function (Blueprint $table) {
+        Schema::table('api_authorizations', static function (Blueprint $table) {
             $table->dropIndex('unique_value_per_user');
         });
     }

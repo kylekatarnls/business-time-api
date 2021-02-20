@@ -14,7 +14,7 @@ class MakeUsersSoftDeletable extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', static function (Blueprint $table) {
             $table->softDeletes(self::COLUMN, 6);
         });
     }
@@ -26,7 +26,7 @@ class MakeUsersSoftDeletable extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', static function (Blueprint $table) {
             $table->dropSoftDeletes(self::COLUMN);
         });
     }

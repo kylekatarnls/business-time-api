@@ -13,7 +13,7 @@ class CreateApiAuthorizationQuotaNotificationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('api_authorization_quota_notifications', function (Blueprint $table) {
+        Schema::create('api_authorization_quota_notifications', static function (Blueprint $table) {
             $table->id();
             $table->timestamp('created_at', 6);
             $table->mediumInteger('year', false, true);

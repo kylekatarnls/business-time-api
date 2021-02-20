@@ -13,7 +13,7 @@ class AddLastSubscribeAtColumnToUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', static function (Blueprint $table) {
             $table->timestamp('last_subscribe_at', 6)->nullable();
         });
     }
@@ -25,7 +25,7 @@ class AddLastSubscribeAtColumnToUsersTable extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', static function (Blueprint $table) {
             $table->dropColumn('last_subscribe_at');
         });
     }

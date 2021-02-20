@@ -13,7 +13,7 @@ class CreateDailyFilteredLogTable extends Migration
      */
     public function up()
     {
-        Schema::create('daily_filtered_log', function (Blueprint $table) {
+        Schema::create('daily_filtered_log', static function (Blueprint $table) {
             $table->id();
             $table->date('date')->index();
             $table->enum('key', ['code', 'ville', 'ip', 'domain'])->index();
@@ -30,6 +30,6 @@ class CreateDailyFilteredLogTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('daily_log');
+        Schema::dropIfExists('daily_filtered_log');
     }
 }

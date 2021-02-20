@@ -13,7 +13,7 @@ class CreateRefundsTable extends Migration
      */
     public function up()
     {
-        Schema::create('refunds', function (Blueprint $table) {
+        Schema::create('refunds', static function (Blueprint $table) {
             $table->id();
             $table->string('stripe_refund_id')->unique();
             $table->string('payment_intent')->index();
