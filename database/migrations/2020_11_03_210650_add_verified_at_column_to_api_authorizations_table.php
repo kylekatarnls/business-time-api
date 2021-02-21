@@ -13,7 +13,7 @@ class AddVerifiedAtColumnToApiAuthorizationsTable extends Migration
      */
     public function up()
     {
-        Schema::table('api_authorizations', function (Blueprint $table) {
+        Schema::table('api_authorizations', static function (Blueprint $table) {
             $table->timestamp('verified_at', 6)->nullable();
         });
     }
@@ -25,7 +25,7 @@ class AddVerifiedAtColumnToApiAuthorizationsTable extends Migration
      */
     public function down()
     {
-        Schema::table('api_authorizations', function (Blueprint $table) {
+        Schema::table('api_authorizations', static function (Blueprint $table) {
             $table->dropColumn('verified_at');
         });
     }

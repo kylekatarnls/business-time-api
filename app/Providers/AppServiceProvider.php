@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\View\Components\SubscriptionBilling;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Stripe\Stripe;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        Livewire::component('subscription-billing', SubscriptionBilling::class);
     }
 
     /**

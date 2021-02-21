@@ -16,7 +16,7 @@ class CreateLogTable extends Migration
     public function up()
     {
         try {
-            Schema::create('log', function (Blueprint $table) {
+            Schema::create('log', static function (Blueprint $table) {
                 $table->id();
                 $table->timestamp('date')->index();
                 $table->string('ip', 255)->index();

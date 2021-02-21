@@ -13,7 +13,7 @@ class AddDayColumnToLogTable extends Migration
      */
     public function up()
     {
-        Schema::table('log', function (Blueprint $table) {
+        Schema::table('log', static function (Blueprint $table) {
             $table->date('day')->nullable()->index();
         });
     }
@@ -25,7 +25,7 @@ class AddDayColumnToLogTable extends Migration
      */
     public function down()
     {
-        Schema::table('log', function (Blueprint $table) {
+        Schema::table('log', static function (Blueprint $table) {
             $table->dropColumn('day');
         });
     }

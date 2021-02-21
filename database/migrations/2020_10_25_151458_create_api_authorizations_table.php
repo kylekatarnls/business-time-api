@@ -13,7 +13,7 @@ class CreateApiAuthorizationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('api_authorizations', function (Blueprint $table) {
+        Schema::create('api_authorizations', static function (Blueprint $table) {
             $table->id();
             $table->timestamps(6);
             $table->softDeletes('deleted_at', 6);

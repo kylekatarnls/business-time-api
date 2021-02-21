@@ -349,5 +349,12 @@
     "IP address seen: :ips|IP addresses seen: :ips": "Adresse IP visible : :ips|Adresses IP visibles : :ips",
     "Expected IP address: :ip": "Adresse IP attendue : :ip",
     "Log in your server (using SSH for instance) and call the URL using this command:": "Connectez-vous à votre serveur (en SSH par exemple) et appelez l'URL en exécutant cette command :",
-    "Command copied.": "Commande copiée."
+    "Command copied.": "Commande copiée.",
+    "Subscription termination": "Clôture d'abonnement",
+    "Stop the subscription (cancel renewing on term).": "Terminer l'abonnement (annuler le renouvellement à échéance).",
+    "Any requests (over free quota) happening after :dateAndTime will be blocked if you cancel your subscription. Please confirm clicking on \"Terminate\" or cancel the termination by clicking on \"Renew\".": "Toute requête (au delà de la limite gratuite) ayant lieu après :dateAndTime va être bloquée si vous annulez votre abonnement. Veuillez confirmer en cliquant sur  \"Terminer\" ou annuler la clôture en cliquant sur \"Conserver\".",
+    "Terminate subscription on term": "Terminer l'abonnement à échéance",
+    "Keep subscription (renewed on term)": "Conserver l'abonnement (renouvelé à échéance)",
+    "Subscription end: :date": "Fin de la souscription : :date",
+    "Activate auto-renew": "Activer le renouvellement automatique"
 }

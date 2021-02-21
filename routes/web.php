@@ -35,6 +35,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(static function () {
     Route::post('/subscribe/{plan}', [Controller::class, 'subscribePlan'])->name('subscribe-plan');
     Route::post('/subscribe/{plan}/cancel', [Controller::class, 'cancelSubscribe'])->name('subscribe-cancel');
     Route::get('/billing', [Controller::class, 'billingPortal'])->name('billing');
+    Route::get('/billing/autorenew', [Controller::class, 'autorenew'])->name('autorenew');
 });
 
 Route::middleware(['admin'])->group(static function () {

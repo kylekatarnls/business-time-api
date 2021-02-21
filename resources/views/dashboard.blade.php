@@ -61,12 +61,15 @@
                             ]) }}
                         </p>
                         @if($limit === INF)
-                            <p class="my-4 p-3 bg-green-100">
-                                <span class="py-1 px-3 mr-2 bg-green-700 text-white text-sm rounded-lg">{{ $plan['name'] }}</span>
-                                {{ __('Total paid requests: :requests', [
-                                   'requests' => Number::format($paidRequests),
-                                ]) }}
-                            </p>
+                            <div class="my-4 p-3 bg-green-100">
+                                <p>
+                                    <span class="py-1 px-3 mr-2 bg-green-700 text-white text-sm rounded-lg">{{ $plan['name'] }}</span>
+                                    {{ __('Total paid requests: :requests', [
+                                       'requests' => Number::format($paidRequests),
+                                    ]) }}
+                                </p>
+                                @livewire('subscription-billing', $nextBill)
+                            </div>
                         @elseif($limit)
                             <div class="my-4 p-3 bg-yellow-100">
                                 <p>
@@ -97,7 +100,7 @@
                                     </div>
                                 @endif
                                 <p class="mt-2 text-sm">{{ __('Next counter reset: :date', ['date' => $nextCounterReset]) }}</p>
-                                <p class="mt-1 text-sm">{{ __('Next billing: :date', ['date' => $nextBill]) }}</p>
+                                @livewire('subscription-billing', $nextBill)
                             </div>
                             <p class="my-4">
                                 {{ __('Your :plan subscription allow you :requests more requests per month shared among your properties.', [

@@ -199,7 +199,10 @@ try {
                                        s.`updated_at` AS `refreshed_at`,
                                        s.`name` AS `plan`
                                 FROM `api_authorizations` as a
-                                LEFT JOIN `subscriptions` AS s ON s.user_id = a.user_id AND s.stripe_status = 'active'
+                                LEFT JOIN `subscriptions` AS s
+                                    ON s.`user_id` = a.`user_id`
+                                    AND s.`stripe_status` = 'active'
+                                    AND (s.`ends_at` IS NULL OR s.`ends_at` > DATE_ADD(NOW(), INTERVAL 5 MINUTE))
                                 WHERE `type` = :type AND (`value` = :property$tldClause)
                             ");
                             $query->execute($queryParams);

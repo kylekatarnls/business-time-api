@@ -13,7 +13,7 @@ class CreateDailyLogTable extends Migration
      */
     public function up()
     {
-        Schema::create('daily_log', function (Blueprint $table) {
+        Schema::create('daily_log', static function (Blueprint $table) {
             $table->id();
             $table->date('date')->unique();
             $table->bigInteger('count')->unsigned();

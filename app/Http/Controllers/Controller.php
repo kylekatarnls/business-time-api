@@ -153,12 +153,15 @@ class Controller extends AbstractController
         $plans = Plan::getPlansData();
         $planId = $user->getPlanId(array_keys($plans));
         $nextBill = '';
+        $nextBillDateTime = '';
         $nextCounterReset = '';
         $subscription = $user->getActiveSubscription();
 
         if ($subscription) {
             if (isset($subscription['current_period_end'])) {
-                $nextBill = CarbonImmutable::createFromTimeStamp($subscription['current_period_end'])->calendar();
+                $nextBillCarbon = CarbonImmutable::createFromTimeStamp($subscription['current_period_end']);
+                $nextBill = $nextBillCarbon->calendar();
+                $nextBillDateTime = $nextBillCarbon->isoFormat('L LTS');
             }
 
             if (isset($subscription['created'])) {
@@ -189,7 +192,14 @@ class Controller extends AbstractController
             'freeLimit'             => $this->getFreePlan()['limit'],
             'paidRequests'          => $paidRequests,
             'percentage'            => $limit ? min(1, $paidRequests / $limit) * 100 : null,
-            'nextBill'              => $nextBill,
+            'nextBill'              => [
+                'end'          => $subscription?->cancel_at
+                    ? CarbonImmutable::createFromTimestamp($subscription->cancel_at)->calendar()
+                    : null,
+                'date'         => $nextBill,
+                'dateTime'     => $nextBillDateTime,
+                'subscription' => $subscription?->id,
+            ],
             'nextCounterReset'      => $nextCounterReset,
             'month'                 => CarbonImmutable::now()->monthName,
             'authorizations'        => $authorizations,
@@ -199,6 +209,7 @@ class Controller extends AbstractController
             'verifiedAuthorization' => $session->pull('verifiedAuthorization'),
             'errors'                => (array) $session->pull('errors', []),
             'hasVerifiedProperties' => $user->hasVerifiedProperties(),
+            'confirmingSubscriptionCancellation' => false,
         ]);
 
         if (!$request->cookie('vuid')) {
@@ -208,6 +219,23 @@ class Controller extends AbstractController
         }
 
         return $view;
+    }
+
+    public function autorenew(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $subscription = $user->getActiveSubscription();
+
+        if ($subscription?->cancel_at) {
+            $user
+                ->subscriptions
+                ->where('stripe_id', $subscription->id)
+                ->first()
+                ->resume();
+        }
+
+        return redirect('dashboard');
     }
 
     public function plan(Request $request): View
