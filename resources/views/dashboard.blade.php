@@ -221,6 +221,7 @@
                                                             @csrf
 
                                                             <input type="hidden" name="_method" value="delete" />
+                                                            <input type="hidden" name="type" value="{{ $authorization->type }}" />
                                                             <input type="hidden" name="value" value="{{ $authorization->value }}" />
 
                                                             <x-jet-secondary-button

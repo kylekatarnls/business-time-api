@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\AcceptHeader;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class AuthorizationController extends AbstractController
@@ -44,9 +43,10 @@ final class AuthorizationController extends AbstractController
 
             return redirect('dashboard')
                 ->withInput()
-                ->with('authorisationsErrors', [$type => ([
+                ->with('authorisationsErrors', [$type => match ((string) $exception->getCode()) {
                     '23000' => 'duplicate',
-                ])[(string) $exception->getCode()] ?? 'unknown']);
+                    default => 'unknown',
+                }]);
         }
 
         return redirect('dashboard');
@@ -55,7 +55,10 @@ final class AuthorizationController extends AbstractController
     public function delete(Request $request): RedirectResponse
     {
         $value = $request->get('value');
-        $this->getUser()->apiAuthorizations()->where('value', $value)->delete();
+        $this->getUser()->apiAuthorizations()->where([
+            'type'  => $request->get('type'),
+            'value' => $value,
+        ])->delete();
 
         self::clearCache('ip', $value);
         self::clearCache('domain', $value);
