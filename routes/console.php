@@ -52,6 +52,12 @@ Artisan::command('refresh', function () {
 })->purpose('Refresh cache files');
 
 Artisan::command('directories', function () {
+    $dir = __DIR__ . '/../data/stripe';
+
+    if (!is_dir($dir)) {
+        mkdir($dir);
+    }
+
     $year = (int) date('Y');
 
     for ($y = 0; $y < 20; $y++) {

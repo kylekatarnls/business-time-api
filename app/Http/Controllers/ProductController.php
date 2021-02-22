@@ -13,7 +13,7 @@ final class ProductController extends AbstractController
     {
         $payload = @file_get_contents('php://input');
         file_put_contents(
-            __DIR__ . '/../../../data/stripe/hook-' . now()->format('Y-m-d--h-i-s--u') . '.json',
+            __DIR__ . '/../../../data/stripe/hook-' . now()->format('Y-m-d--H-i-s--u') . '.json',
             json_encode(json_decode($payload, true), JSON_PRETTY_PRINT),
         );
 

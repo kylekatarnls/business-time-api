@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Authorization\AuthorizationFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,8 @@ use Illuminate\Support\Str;
  */
 final class ApiAuthorization extends Model
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
