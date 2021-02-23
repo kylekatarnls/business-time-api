@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Str;
@@ -55,10 +56,13 @@ final class AuthorizationController extends AbstractController
     public function delete(Request $request): RedirectResponse
     {
         $value = $request->get('value');
+        $type = $request->get('type');
         $this->getUser()->apiAuthorizations()->where([
-            'type'  => $request->get('type'),
+            'type'  => $type,
             'value' => $value,
         ])->delete();
+
+        Log::notice('User #' . Auth::id() . ' deleted the [' . $type . '] "' . $value . '"');
 
         self::clearCache('ip', $value);
         self::clearCache('domain', $value);
