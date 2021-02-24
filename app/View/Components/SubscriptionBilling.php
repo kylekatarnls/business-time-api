@@ -5,6 +5,7 @@ namespace App\View\Components;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Subscription;
 use Livewire\Component;
 
@@ -31,6 +32,8 @@ class SubscriptionBilling extends Component
         /** @var Subscription $subscription */
         $subscription = $user->subscriptions->where('stripe_id', $this->viewData['subscription'])->first();
         $subscription->cancel();
+
+        Log::warning('User ' . $user->id . ' cancelled subscription ' . $subscription->ends_at);
 
         $this->redirect('dashboard');
     }

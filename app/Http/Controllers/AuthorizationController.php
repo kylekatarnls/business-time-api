@@ -75,7 +75,7 @@ final class AuthorizationController extends AbstractController
         /** @var ApiAuthorization $authorization */
         $authorization = $this->getUser()->apiAuthorizations()->where(['value' => $ipOrDomain])->first();
 
-        return Response::download(
+        return ResponseFacade::download(
             $authorization->getVerificationInternalFile(),
             $authorization->getVerificationFileName(),
         );

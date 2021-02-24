@@ -9,10 +9,13 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
                 @foreach($users as $user)
+                    @php
+                        $lineClass = $user->apiAuthorizations->count() > 0 ? '' : 'opacity-50';
+                    @endphp
                     <div class="flex flex-row w-full">
                         <a
                             href="{{ route('user-dashboard', $user->id) }}"
-                            class="flex flex-grow flex-row hover:bg-blue-200 p-1 border-b border-gray-400"
+                            class="{{ $lineClass }} flex flex-grow flex-row hover:bg-blue-200 p-1 border-b border-gray-400"
                         >
                             <span class="flex w-1/4">
                                 @php
@@ -45,13 +48,13 @@
                             <span class="flex w-1/2">
                                 {{ $user->email }}
                             </span>
-                            <span class="flex w-1/4">
+                            <span class=" flex w-1/4">
                                 {{ $user->name }}
                             </span>
                         </a>
                         <a
                             href="{{ route('admin-user', $user->id) }}"
-                            class="flex flex-shrink hover:bg-blue-200 p-1 border-b border-gray-400"
+                            class="{{ $lineClass }} flex flex-shrink hover:bg-blue-200 p-1 border-b border-gray-400"
                         >
                             {{ __('Login') }}
                         </a>
