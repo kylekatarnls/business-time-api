@@ -144,4 +144,31 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
         $this->assertSame(file_get_contents($tokenFile), $response->getFile()->getContent());
     }
+
+    public function testVerify(): void
+    {
+        $ziggy = $this->newZiggy();
+        $authorization = $ziggy->apiAuthorizations()->create([
+            'name' => 'Ultimate central server',
+            'type' => 'ip',
+            'value' => '189.204.12.55',
+        ]);
+        Auth::login($ziggy);
+        $controller = new AuthorizationController();
+
+        $response = $controller->verify('ip', '189.204.12.55');
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $session = $response->getSession();
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+        $this->assertSame(
+            "L'IP doit être vérifiée par une requête envoyée depuis le serveur.",
+            $session->get('verifyError'),
+        );
+        $this->assertSame($authorization->id, $session->get('verifiedAuthorization'));
+        $this->assertSame(
+            ['verifyError', 'verifiedAuthorization'],
+            $session->get('_flash.new'),
+        );
+    }
 }
