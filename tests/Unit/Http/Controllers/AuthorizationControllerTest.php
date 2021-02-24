@@ -7,6 +7,7 @@ use App\Models\ApiAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 final class AuthorizationControllerTest extends TestCase
@@ -121,5 +122,26 @@ final class AuthorizationControllerTest extends TestCase
             'user_id' => $ziggy->id,
             'value'   => '189.204.12.55',
         ])->forceDelete();
+    }
+
+    public function testGetVerifyToken(): void
+    {
+        $ziggy = $this->newZiggy();
+        $authorization = $ziggy->apiAuthorizations()->create([
+            'name' => 'Ultimate central server',
+            'type' => 'ip',
+            'value' => '189.204.12.55',
+        ]);
+        $tokenFile = __DIR__ . '/../../../../data/check/' . $authorization->id . '.txt';
+        Auth::login($ziggy);
+        $controller = new AuthorizationController();
+
+        $this->assertFileDoesNotExist($tokenFile);
+
+        $response = $controller->getVerifyToken('189.204.12.55');
+
+        $this->assertFileExists($tokenFile);
+        $this->assertInstanceOf(BinaryFileResponse::class, $response);
+        $this->assertSame(file_get_contents($tokenFile), $response->getFile()->getContent());
     }
 }

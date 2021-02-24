@@ -233,6 +233,8 @@ class Controller extends AbstractController
                 ->where('stripe_id', $subscription->id)
                 ->first()
                 ->resume();
+
+            Log::info('User ' . $user->id . ' re-enabled autorenew for ' . $subscription->id);
         }
 
         return redirect('dashboard');
