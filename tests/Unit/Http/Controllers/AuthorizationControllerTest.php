@@ -170,5 +170,48 @@ final class AuthorizationControllerTest extends TestCase
             ['verifyError', 'verifiedAuthorization'],
             $session->get('_flash.new'),
         );
+        $session->flush();
+
+        $authorization = $ziggy->apiAuthorizations()->create([
+            'name' => 'Ultimate central server',
+            'type' => 'domain',
+            'value' => 'verify.selfbuild.fr',
+        ]);
+
+        $response = $controller->verify('domain', 'verify.selfbuild.fr');
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $session = $response->getSession();
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+        $this->assertNull($session->get('verifyError'));
+        $this->assertSame($authorization->id, $session->get('verifiedAuthorization'));
+        $this->assertSame(
+            ['verifyError', 'verifiedAuthorization'],
+            $session->get('_flash.new'),
+        );
+
+        $authorization = $ziggy->apiAuthorizations()->create([
+            'name' => 'Ultimate central server',
+            'type' => 'domain',
+            'value' => 'not-verified.selfbuild.fr',
+        ]);
+
+        $response = $controller->verify('domain', 'not-verified.selfbuild.fr');
+        $token = file_get_contents(
+            __DIR__ . '/../../../../data/check/' . $authorization->id . '.txt',
+        );
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $session = $response->getSession();
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+        $this->assertSame(
+            "L'URL http://not-verified.selfbuild.fr/.well-known/$token.html ne retourne pas \"$token\".",
+            $session->get('verifyError'),
+        );
+        $this->assertSame($authorization->id, $session->get('verifiedAuthorization'));
+        $this->assertSame(
+            ['verifyError', 'verifiedAuthorization'],
+            $session->get('_flash.new'),
+        );
     }
 }
