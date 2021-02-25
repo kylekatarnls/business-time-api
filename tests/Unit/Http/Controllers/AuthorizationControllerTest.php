@@ -170,7 +170,6 @@ final class AuthorizationControllerTest extends TestCase
             ['verifyError', 'verifiedAuthorization'],
             $session->get('_flash.new'),
         );
-        $session->flush();
 
         $authorization = $ziggy->apiAuthorizations()->create([
             'name' => 'Ultimate central server',
@@ -178,6 +177,7 @@ final class AuthorizationControllerTest extends TestCase
             'value' => 'verify.selfbuild.fr',
         ]);
 
+        $session->flush();
         $response = $controller->verify('domain', 'verify.selfbuild.fr');
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
@@ -196,6 +196,7 @@ final class AuthorizationControllerTest extends TestCase
             'value' => 'not-verified.selfbuild.fr',
         ]);
 
+        $session->flush();
         $response = $controller->verify('domain', 'not-verified.selfbuild.fr');
         $token = file_get_contents(
             __DIR__ . '/../../../../data/check/' . $authorization->id . '.txt',
