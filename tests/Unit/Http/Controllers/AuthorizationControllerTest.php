@@ -8,11 +8,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 final class AuthorizationControllerTest extends TestCase
 {
+    private $failApiAuthorizationSaving = false;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        ApiAuthorization::saving(function () {
+            return !$this->failApiAuthorizationSaving;
+        });
+    }
+
     public function testCreate(): void
     {
         $ziggy = $this->newZiggy();
@@ -216,14 +228,10 @@ final class AuthorizationControllerTest extends TestCase
             $session->get('_flash.new'),
         );
 
-        $fail = true;
-        ApiAuthorization::saving(function () use (&$fail) {
-            return !$fail;
-        });
-
+        $this->failApiAuthorizationSaving = true;
         $session->flush();
         $response = $controller->verify('domain', 'verify.selfbuild.fr');
-        $fail = false;
+        $this->failApiAuthorizationSaving = false;
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $session = $response->getSession();
@@ -260,5 +268,37 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('OK', $response->getContent());
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', $ip);
+        $request->headers->set(
+            'Accept',
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,' .
+            'application/signed-exchange;v=b3;q=0.9'
+        );
+        $response = $controller->verifyIp($request, $ziggy->email, $token, $ip);
+
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString(
+            'Adresse IP 189.204.12.55 confirmée pour votre serveur.',
+            $response->getContent(),
+        );
+
+        $this->failApiAuthorizationSaving = true;
+        $message = null;
+
+        try {
+            $controller->verifyIp($request, $ziggy->email, $token, $ip);
+        } catch (RuntimeException $exception) {
+            $message = $exception->getMessage();
+        }
+
+        $this->failApiAuthorizationSaving = false;
+
+        $this->assertSame(
+            "Une erreur inconnue s'est produite lors de la vérification, veuillez réessayer.",
+            $message,
+        );
     }
 }
