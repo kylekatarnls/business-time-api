@@ -7,6 +7,7 @@ use App\Models\ApiAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use ReflectionMethod;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
@@ -171,7 +172,7 @@ final class AuthorizationControllerTest extends TestCase
             $session->get('_flash.new'),
         );
 
-        $authorization = $ziggy->apiAuthorizations()->create([
+        $authorizationOk = $ziggy->apiAuthorizations()->create([
             'name' => 'Ultimate central server',
             'type' => 'domain',
             'value' => 'verify.selfbuild.fr',
@@ -184,13 +185,13 @@ final class AuthorizationControllerTest extends TestCase
         $session = $response->getSession();
         $this->assertTrue($response->isRedirect(route('dashboard')));
         $this->assertNull($session->get('verifyError'));
-        $this->assertSame($authorization->id, $session->get('verifiedAuthorization'));
+        $this->assertSame($authorizationOk->id, $session->get('verifiedAuthorization'));
         $this->assertSame(
             ['verifyError', 'verifiedAuthorization'],
             $session->get('_flash.new'),
         );
 
-        $authorization = $ziggy->apiAuthorizations()->create([
+        $authorizationKo = $ziggy->apiAuthorizations()->create([
             'name' => 'Ultimate central server',
             'type' => 'domain',
             'value' => 'not-verified.selfbuild.fr',
@@ -199,7 +200,7 @@ final class AuthorizationControllerTest extends TestCase
         $session->flush();
         $response = $controller->verify('domain', 'not-verified.selfbuild.fr');
         $token = file_get_contents(
-            __DIR__ . '/../../../../data/check/' . $authorization->id . '.txt',
+            __DIR__ . '/../../../../data/check/' . $authorizationKo->id . '.txt',
         );
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
@@ -209,7 +210,29 @@ final class AuthorizationControllerTest extends TestCase
             "L'URL http://not-verified.selfbuild.fr/.well-known/$token.html ne retourne pas \"$token\".",
             $session->get('verifyError'),
         );
-        $this->assertSame($authorization->id, $session->get('verifiedAuthorization'));
+        $this->assertSame($authorizationKo->id, $session->get('verifiedAuthorization'));
+        $this->assertSame(
+            ['verifyError', 'verifiedAuthorization'],
+            $session->get('_flash.new'),
+        );
+
+        $fail = true;
+        ApiAuthorization::saving(function () use (&$fail) {
+            return !$fail;
+        });
+
+        $session->flush();
+        $response = $controller->verify('domain', 'verify.selfbuild.fr');
+        $fail = false;
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $session = $response->getSession();
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+        $this->assertSame(
+            "Une erreur inconnue s'est produite lors de la vérification, veuillez réessayer.",
+            $session->get('verifyError'),
+        );
+        $this->assertSame($authorizationOk->id, $session->get('verifiedAuthorization'));
         $this->assertSame(
             ['verifyError', 'verifiedAuthorization'],
             $session->get('_flash.new'),
