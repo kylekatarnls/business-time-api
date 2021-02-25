@@ -6,8 +6,8 @@ use App\Http\Controllers\AuthorizationController;
 use App\Models\ApiAuthorization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use ReflectionMethod;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
@@ -237,5 +237,28 @@ final class AuthorizationControllerTest extends TestCase
             ['verifyError', 'verifiedAuthorization'],
             $session->get('_flash.new'),
         );
+    }
+
+    public function testVerifyIp(): void
+    {
+        $ip = '189.204.12.55';
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', $ip);
+        $ziggy = $this->newZiggy();
+        /** @var ApiAuthorization $authorization */
+        $authorization = $ziggy->apiAuthorizations()->create([
+            'name' => 'Ultimate central server',
+            'type' => 'ip',
+            'value' => $ip,
+        ]);
+        $token = $authorization->getVerificationToken();
+        Auth::login($ziggy);
+        $controller = new AuthorizationController();
+
+        $response = $controller->verifyIp($request, $ziggy->email, $token, $ip);
+
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getContent());
     }
 }
