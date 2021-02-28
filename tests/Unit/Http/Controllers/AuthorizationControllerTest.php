@@ -300,5 +300,53 @@ final class AuthorizationControllerTest extends TestCase
             "Une erreur inconnue s'est produite lors de la vérification, veuillez réessayer.",
             $message,
         );
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '1.2.3.4');
+        $request->headers->set(
+            'Accept',
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,' .
+            'application/signed-exchange;v=b3;q=0.9'
+        );
+        $response = $controller->verifyIp($request, $ziggy->email, $token, $ip);
+
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertSame(401, $response->getStatusCode());
+        $this->assertStringContainsString(
+            "Le jeton $token n&#039;est pas pour l&#039;adresse IP: 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP $ip.",
+            $response->getContent(),
+        );
+        $this->assertStringContainsString(
+            'Adresse IP visible : 1.2.3.4',
+            $response->getContent(),
+        );
+        $this->assertStringContainsString(
+            'Adresse IP attendue : 189.204.12.55',
+            $response->getContent(),
+        );
+        $this->assertStringContainsString(
+            'Connectez-vous à votre serveur (en SSH par exemple) et appelez l&#039;URL en exécutant cette command :',
+            $response->getContent(),
+        );
+        $appUrl = config('app.url');
+        $this->assertStringContainsString(
+            "curl -s $appUrl/verify-ip/ziggy%40star.dust/$token/189.204.12.55.html",
+            $response->getContent(),
+        );
+
+        $request = new Request();
+        Request::setTrustedProxies(['123.45.67.89', '87.65.43.21'], Request::HEADER_X_FORWARDED_FOR);
+        $server = [
+            'REMOTE_ADDR' => '123.45.67.89',
+            'HTTP_X_FORWARDED_FOR' => '127.0.0.1, 87.65.43.21, 88.88.88.88',
+        ];
+        $request->initialize([], [], [], [], [], $server);
+        $response = $controller->verifyIp($request, $ziggy->email, $token, $ip);
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertSame(401, $response->getStatusCode());
+        $this->assertSame(
+            "Erreur\nLe jeton $token n'est pour aucune des adresses IP : 88.88.88.88, 127.0.0.1. Veuillez accéder à cet URL depuis votre serveur avec l'IP $ip.",
+            $response->getContent(),
+        );
     }
 }
