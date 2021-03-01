@@ -12,7 +12,7 @@
                     {{ $error }}
                 </p>
 
-                <p class="my-4">{{ trans_choice('IP address seen: :ips|IP addresses seen: :ips', ['ips' => implode(', ', $ips)]) }}</p>
+                <p class="my-4">{{ trans_choice('IP address seen: :ips|IP addresses seen: :ips', count($ips), ['ips' => implode(', ', $ips)]) }}</p>
 
                 @if($ip)
                     <p class="my-4">{{ __('Expected IP address: :ip', ['ip' => $ip]) }}</p>

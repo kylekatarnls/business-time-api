@@ -188,7 +188,7 @@ try {
                             ];
 
                             if ($tld) {
-                                $tldClause = ' OR `value` = :tld';
+                                $tldClause = ' OR a.`value` = :tld';
                                 $queryParams['tld'] = $tld;
                             }
 
@@ -203,7 +203,8 @@ try {
                                     ON s.`user_id` = a.`user_id`
                                     AND s.`stripe_status` = 'active'
                                     AND (s.`ends_at` IS NULL OR s.`ends_at` > DATE_ADD(NOW(), INTERVAL 5 MINUTE))
-                                WHERE `type` = :type AND (`value` = :property$tldClause)
+                                WHERE a.`type` = :type AND (a.`value` = :property$tldClause)
+                                    AND a.`verified_at` IS NOT NULL
                             ");
                             $query->execute($queryParams);
                             $subscription = $query->fetch(PDO::FETCH_OBJ);
