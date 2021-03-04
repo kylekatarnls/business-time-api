@@ -238,7 +238,7 @@ try {
 
                                 $subscriptionFile = $subscriptionDirectory.'/m'.$month.'.txt';
                                 $subscriptionCount = ((int) @file_get_contents($subscriptionFile)) + 1;
-                                $quotaReached = $subscriptionCount > ($quotaMax - $limit);
+                                $quotaReached = $subscriptionCount > $quotaMax;
 
                                 if (!$quotaReached) {
                                     $counted = true;
