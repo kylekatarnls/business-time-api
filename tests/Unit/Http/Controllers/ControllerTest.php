@@ -4,11 +4,38 @@ namespace Tests\Unit\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Session\Store;
+use Illuminate\Support\Facades\Session;
 use ReflectionMethod;
+use SessionHandler;
 use Tests\TestCase;
 
 final class ControllerTest extends TestCase
 {
+    public function testHome(): void
+    {
+        $controller = new Controller();
+        $home = $controller->home();
+
+        $this->assertInstanceOf(RedirectResponse::class, $home);
+        $this->assertTrue($home->isRedirect(route('dashboard')));
+    }
+
+    public function testIncreaseLimit(): void
+    {
+        $controller = new Controller();
+        $request = new Request();
+        $session = new Store('session', new SessionHandler());
+        $request->setLaravelSession($session);
+        $response = $controller->increaseLimit($request, 'abc');
+
+        $this->assertSame('abc', $session->get('increase-limit'));
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+    }
+
     public function testGetGuestPlan(): void
     {
         $controller = new Controller();
