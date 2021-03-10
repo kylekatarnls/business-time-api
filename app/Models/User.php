@@ -207,6 +207,10 @@ final class User extends Authenticatable
             sleep(1);
         }
 
+        if (!$customer) {
+            throw $exception;
+        }
+
         /** @var Subscription[] $subscriptions */
         $subscriptions = $customer->subscriptions;
 

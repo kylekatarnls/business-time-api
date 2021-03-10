@@ -18,7 +18,10 @@ use Laravel\Cashier\Subscription;
 use ReflectionMethod;
 use ReflectionProperty;
 use Stripe\Collection;
+use Stripe\Exception\ApiConnectionException;
+use Stripe\Stripe;
 use Tests\TestCase;
+use Throwable;
 
 final class UserTest extends TestCase
 {
@@ -197,6 +200,29 @@ final class UserTest extends TestCase
         $this->assertInstanceOf(Collection::class, $subscriptions);
         $this->assertSame([], iterator_to_array($subscriptions));
         $this->assertTrue($ziggy->hasStripeId());
+    }
+
+    public function testGetCustomerSubscriptionsRetry(): void
+    {
+        Log::shouldReceive('warning', 'warning', 'warning');
+
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+        $apiBase = Stripe::$apiBase;
+        Stripe::$apiBase = 'https://broken.selfbuild.fr';
+        $error = null;
+        $subscriptions = null;
+
+        try {
+            $subscriptions = $ziggy->getCustomerSubscriptions();
+        } catch (Throwable $exception) {
+            $error = $exception;
+        }
+
+        Stripe::$apiBase = $apiBase;
+
+        $this->assertInstanceOf(ApiConnectionException::class, $error);
+        $this->assertNull($subscriptions);
     }
 
     public function testGetSubscriptionRecurrence(): void
