@@ -180,6 +180,7 @@ final class ControllerTest extends TestCase
         $this->assertSame($ziggy, $data['user']);
         $this->assertSame(config('stripe.publishable_key'), $data['stripeKey']);
         $this->assertSame(3, $data['numberOfPlans']);
+        $this->assertNull($data['closureFees']);
         $this->assertSame([
             'start' => 'Start',
             'pro' => 'Pro',
