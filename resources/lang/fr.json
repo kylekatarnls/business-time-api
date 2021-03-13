@@ -271,7 +271,7 @@
     "I accept :the-terms-of-service": "J'accepte :the-terms-of-service",
     "Terms of Service": "Conditions d'utilisation et de vente",
     "OK": "OK",
-    "Per property counts are given from first to last month of the day midnight, Paris hours; while plan requests are counted from the subscription date and time.": "Les comptes par priopriété sont exprimés du premier au dernier jours du moins minuit, heure de Paris ; tandis que les requêtes de l'abonnement sont comptées à partir de la date et heure de souscription.",
+    "Per property counts are given from first to last day of the month, midnight, Paris hours; while plan requests are counted from the subscription date and time.": "Les comptes par propriété sont exprimés du premier au dernier jours du mois à minuit, heure de Paris ; tandis que les requêtes de l'abonnement sont comptées à partir de la date et heure de souscription.",
     "Date": "Date",
     "The list of logs is empty!": "La liste des logs est vide !",
     "All": "Tous",

@@ -3,11 +3,15 @@
 namespace Tests\Unit\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiAuthorization;
 use App\Models\Plan;
+use App\Models\User;
+use App\View\Components\SubscriptionBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Session\Store;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 use ReflectionMethod;
 use SessionHandler;
 use Tests\TestCase;
@@ -72,5 +76,108 @@ final class ControllerTest extends TestCase
             'product'  => 'free',
             'currency' => 'eur',
         ], $plan->getArrayCopy());
+    }
+
+    public function testSubscription(): void
+    {
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+        /** @var ApiAuthorization $auth */
+        $auth = $ziggy->apiAuthorizations()->create([
+            'name'  => 'Website',
+            'type'  => 'domain',
+            'value' => 'web.github.io',
+        ]);
+        $auth->verify();
+        $ziggy = $this->reloadUser($ziggy);
+        $content = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringNotContainsString(
+            'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',
+            $content,
+        );
+        $this->assertStringNotContainsString(
+            'Activer le renouvellement automatique',
+            $content,
+        );
+
+        $this->subscribePlan($ziggy, 'start', 'monthly');
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        $content = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringContainsString(
+            'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',
+            $content,
+        );
+        $this->assertStringNotContainsString(
+            'Activer le renouvellement automatique',
+            $content,
+        );
+
+        $subscriptionBilling = new SubscriptionBilling();
+        $subscriptionBilling->viewData = ['subscription' => $ziggy->getActiveSubscription()->id];
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        $this->assertNull($ziggy->getActiveSubscription()->cancel_at);
+        $this->assertFalse($subscriptionBilling->confirmingSubscriptionCancellation);
+        $subscriptionBilling->confirmSubscriptionCancellation();
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        $this->assertNull($ziggy->getActiveSubscription()->cancel_at);
+        $this->assertTrue($subscriptionBilling->confirmingSubscriptionCancellation);
+        $subscriptionBilling->cancelSubscription();
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        $this->assertNotNull($ziggy->getActiveSubscription()->cancel_at);
+        $content = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringContainsString(
+            'Activer le renouvellement automatique',
+            $content,
+        );
+        $this->assertStringNotContainsString(
+            'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',
+            $content,
+        );
+
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        $response = $controller->autorenew($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('dashboard')));
+
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+        $content = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringContainsString(
+            'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',
+            $content,
+        );
+        $this->assertStringNotContainsString(
+            'Activer le renouvellement automatique',
+            $content,
+        );
+    }
+
+    private function getControllerFor(User $user): array
+    {
+        $controller = new Controller();
+        $request = new Request();
+        $request->setUserResolver(static fn () => $user);
+        $session = new Store('session', new SessionHandler());
+        $request->setLaravelSession($session);
+
+        return [$controller, $request, $session];
+    }
+
+    private function getDashboardFor(User $user): Response
+    {
+        [$controller, $request] = $this->getControllerFor($user);
+
+        return $controller->dashboard($request);
     }
 }
