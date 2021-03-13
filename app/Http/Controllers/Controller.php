@@ -276,7 +276,7 @@ class Controller extends AbstractController
             'user'               => $user,
             'credit'             => $credit,
             'creditCurrency'     => null,
-            'closureFees'        => $closureFees ? Number::format($this->getClosureFees(), 2) : null,
+            'closureFees'        => $closureFees ? Number::format($closureFees, 2) : null,
             'stripeKey'          => config('stripe.publishable_key'),
             'numberOfPlans'      => count($plans),
             'plans'              => $plans,
