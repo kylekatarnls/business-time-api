@@ -313,7 +313,7 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(401, $response->getStatusCode());
         $this->assertStringContainsString(
-            "Le jeton $token n&#039;est pas pour l&#039;adresse IP: 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP $ip.",
+            "Le jeton $token n&#039;est pas pour l&#039;adresse IP : 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP $ip.",
             $response->getContent(),
         );
         $this->assertStringContainsString(
@@ -346,6 +346,24 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertSame(401, $response->getStatusCode());
         $this->assertSame(
             "Erreur\nLe jeton $token n'est pour aucune des adresses IP : 88.88.88.88, 127.0.0.1. Veuillez accéder à cet URL depuis votre serveur avec l'IP $ip.",
+            $response->getContent(),
+        );
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '1.2.3.4');
+        $request->headers->set('Accept', '*/*');
+        $response = $controller->verifyIp($request, $ziggy->email, $token);
+        $this->assertSame(
+            "Erreur\nLe jeton $token n'est pas pour l'adresse IP : 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l'IP que vous souhaitez vérifier.",
+            $response->getContent(),
+        );
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '1.2.3.4');
+        $request->headers->set('Accept', 'text/html');
+        $response = $controller->verifyIp($request, $ziggy->email, $token);
+        $this->assertStringContainsString(
+            "Le jeton $token n&#039;est pas pour l&#039;adresse IP : 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP que vous souhaitez vérifier.",
             $response->getContent(),
         );
     }

@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Model;
 
-use App\Models\User;
 use Tests\TestCase;
 
 final class RefundTest extends TestCase

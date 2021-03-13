@@ -145,7 +145,7 @@ final class AuthorizationController extends AbstractController
         $interpolations = [
             'token'    => $token,
             'ip'       => implode(', ', $ips),
-            'expected' => $ip
+            'expected' => (string) $ip,
         ];
         $error = $ip
             ? trans_choice('The token :token is not for the exposed IP address: :ip. Please access this URL from within your server with the IP :expected.|The token :token is not for any of the exposed IP addresses: :ip. Please access this URL from within your server with the IP :expected.', $count, $interpolations)

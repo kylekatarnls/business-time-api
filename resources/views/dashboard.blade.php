@@ -364,7 +364,7 @@
                     </form>
 
                     <div class="mt-6 text-sm">
-                        *{{ __('Per property counts are given from first to last month of the day midnight, Paris hours; while plan requests are counted from the subscription date and time.') }}
+                        *{{ __('Per property counts are given from first to last day of the month, midnight, Paris hours; while plan requests are counted from the subscription date and time.') }}
                     </div>
                 @endunless
             </div>
