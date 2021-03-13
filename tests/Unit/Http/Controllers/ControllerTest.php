@@ -163,6 +163,36 @@ final class ControllerTest extends TestCase
         );
     }
 
+    public function testPlan(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $this->assertFalse($ziggy->hasStripeId());
+        /**
+         * @var Controller $controller
+         * @var Request $request
+         */
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        $view = $controller->plan($request);
+        $this->assertTrue($ziggy->hasStripeId());
+        $data = $view->getData();
+
+        $this->assertSame($ziggy, $data['user']);
+        $this->assertSame(config('stripe.publishable_key'), $data['stripeKey']);
+        $this->assertSame(3, $data['numberOfPlans']);
+        $this->assertSame([
+            'start' => 'Start',
+            'pro' => 'Pro',
+            'premium' => 'Premium',
+        ], array_map(static fn (array $plan) => $plan['title'], $data['plans']));
+        $this->assertSame('plan', $view->name());
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return array{Controller, Request, Store}
+     */
     private function getControllerFor(User $user): array
     {
         $controller = new Controller();
