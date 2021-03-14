@@ -27,6 +27,54 @@ final class ControllerTest extends TestCase
         $this->assertTrue($home->isRedirect(route('dashboard')));
     }
 
+    public function testContact(): void
+    {
+        $controller = new Controller();
+        $contact = $controller->contact($this->getRequest())->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $contact);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $contact);
+        $this->assertStringNotContainsString('Message envoyé.', $contact);
+
+        [$request, $session] = $this->getRequestWithSession();
+        $session->put('sent', true);
+        $contact = $controller->contact($request)->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $contact);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $contact);
+        $this->assertStringContainsString('Message envoyé.', $contact);
+
+        $exonerate = $controller->exonerate($this->getRequest());
+
+        $this->assertInstanceOf(RedirectResponse::class, $exonerate);
+        $this->assertSame([
+            "Vous devez d'abord enregistrer votre IP ou domaine puis utiliser la validation pour confirmer que vous en êtes le propriétaire.",
+        ], $exonerate->getSession()->get('errors'));
+        $this->assertTrue($exonerate->isRedirect(route('dashboard')));
+
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+        /** @var ApiAuthorization $auth */
+        $auth = $ziggy->apiAuthorizations()->create([
+            'name'  => 'Website',
+            'type'  => 'domain',
+            'value' => 'web.github.io',
+        ]);
+        $auth->verify();
+        Auth::login($ziggy);
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        $exonerate = $controller->exonerate($request)->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $exonerate);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $exonerate);
+
+    }
+
+    public function testPostContact(): void
+    {
+
+    }
+
     public function testIncreaseLimit(): void
     {
         $controller = new Controller();
@@ -197,12 +245,28 @@ final class ControllerTest extends TestCase
     private function getControllerFor(User $user): array
     {
         $controller = new Controller();
-        $request = new Request();
+        [$request, $session] = $this->getRequestWithSession();
         $request->setUserResolver(static fn () => $user);
+
+        return [$controller, $request, $session];
+    }
+
+    private function getRequestWithSession(): array
+    {
+        $request = new Request();
         $session = new Store('session', new SessionHandler());
         $request->setLaravelSession($session);
 
-        return [$controller, $request, $session];
+        return [$request, $session];
+    }
+
+    private function getRequest(): Request
+    {
+        $request = new Request();
+        $session = new Store('session', new SessionHandler());
+        $request->setLaravelSession($session);
+
+        return $request;
     }
 
     private function getDashboardFor(User $user): Response
