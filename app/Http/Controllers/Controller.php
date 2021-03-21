@@ -40,7 +40,7 @@ use Stripe\Refund;
 use Stripe\StripeClient;
 use Stripe\SubscriptionItem;
 
-class Controller extends AbstractController
+final class Controller extends AbstractController
 {
     use AuthorizesRequests;
     use DispatchesJobs;

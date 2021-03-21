@@ -3,6 +3,7 @@
 namespace Tests\Unit\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Contact;
 use App\Models\ApiAuthorization;
 use App\Models\Plan;
 use App\Models\User;
@@ -10,8 +11,12 @@ use App\View\Components\SubscriptionBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
+use Illuminate\View\Factory;
 use ReflectionMethod;
 use SessionHandler;
 use Tests\TestCase;
@@ -72,7 +77,62 @@ final class ControllerTest extends TestCase
 
     public function testPostContact(): void
     {
+        /** @var Factory $viewFactory */
+        $viewFactory = View::getFacadeRoot();
+        Mail::fake();
 
+        $controller = new Controller();
+        $request = $this->getRequest([], [
+            'email' => 'my@email',
+            'message' => "My <strong>message</strong>\non multiple lines.",
+        ]);
+
+        Mail::assertNothingSent();
+
+        $contact = $controller->postContact($request);
+        $this->assertInstanceOf(RedirectResponse::class, $contact);
+        $this->assertTrue($contact->getSession()->get('sent'));
+        $this->assertTrue($contact->isRedirect(route('contact')));
+
+        $getRender = static fn (Contact $mail) => $viewFactory->make($mail->build()->view, $mail->viewData)->render();
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo('my@email') &&
+                $mail->subject === 'Confirmation de message' &&
+                $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
+                !preg_match('`my@email`', $render) &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.'.
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+'.
+                    'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo('my@email') &&
+                $mail->subject === 'Confirmation de message' &&
+                $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
+                !preg_match('`my@email`', $render) &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo(config('app.super_admin')) &&
+                $mail->subject === 'Confirmation de message' &&
+                $mail->viewData['content'] === "my@email\n\nMy <strong>message</strong>\non multiple lines." &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    'my@email<br\s?/?>\n<br\s?/?>\nMy &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
     }
 
     public function testIncreaseLimit(): void
@@ -251,18 +311,18 @@ final class ControllerTest extends TestCase
         return [$controller, $request, $session];
     }
 
-    private function getRequestWithSession(): array
+    private function getRequestWithSession(array $query = [], array $request = []): array
     {
-        $request = new Request();
+        $request = new Request($query, $request);
         $session = new Store('session', new SessionHandler());
         $request->setLaravelSession($session);
 
         return [$request, $session];
     }
 
-    private function getRequest(): Request
+    private function getRequest(array $query = [], array $request = []): Request
     {
-        $request = new Request();
+        $request = new Request($query, $request);
         $session = new Store('session', new SessionHandler());
         $request->setLaravelSession($session);
 

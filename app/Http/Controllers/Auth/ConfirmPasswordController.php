@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AbstractController;
 use App\Providers\RouteServiceProvider;
 use Laravel\Jetstream\ConfirmsPasswords;
 
-class ConfirmPasswordController extends Controller
+class ConfirmPasswordController extends AbstractController
 {
     /*
     |--------------------------------------------------------------------------
