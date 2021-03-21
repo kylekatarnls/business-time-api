@@ -75,31 +75,46 @@ final class ControllerTest extends TestCase
 
     }
 
-    public function testPostContact(): void
+    public function getPostContactTemplate(): iterable
+    {
+        yield ['contact', 'Confirmation de message', null];
+        yield ['exonerate', "Demande d'exonération soumise", 'exonerate'];
+    }
+
+    /**
+     * @dataProvider getPostContactTemplate
+     */
+    public function testPostContact(string $expectedRoute, string $expectedSubject, ?string $template): void
     {
         /** @var Factory $viewFactory */
         $viewFactory = View::getFacadeRoot();
         Mail::fake();
 
         $controller = new Controller();
-        $request = $this->getRequest([], [
+        $fields = [
             'email' => 'my@email',
             'message' => "My <strong>message</strong>\non multiple lines.",
-        ]);
+        ];
+
+        if ($template) {
+            $fields['template'] = $template;
+        }
+
+        $request = $this->getRequest([], $fields);
 
         Mail::assertNothingSent();
 
         $contact = $controller->postContact($request);
         $this->assertInstanceOf(RedirectResponse::class, $contact);
         $this->assertTrue($contact->getSession()->get('sent'));
-        $this->assertTrue($contact->isRedirect(route('contact')));
+        $this->assertTrue($contact->isRedirect(route($expectedRoute)));
 
         $getRender = static fn (Contact $mail) => $viewFactory->make($mail->build()->view, $mail->viewData)->render();
         Mail::assertSent(
             Contact::class,
             static fn (Contact $mail) => ($render = $getRender($mail)) &&
                 $mail->hasTo('my@email') &&
-                $mail->subject === 'Confirmation de message' &&
+                $mail->subject === $expectedSubject &&
                 $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
                 !preg_match('`my@email`', $render) &&
                 preg_match(
@@ -112,7 +127,7 @@ final class ControllerTest extends TestCase
             Contact::class,
             static fn (Contact $mail) => ($render = $getRender($mail)) &&
                 $mail->hasTo('my@email') &&
-                $mail->subject === 'Confirmation de message' &&
+                $mail->subject === $expectedSubject &&
                 $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
                 !preg_match('`my@email`', $render) &&
                 preg_match(
@@ -125,7 +140,7 @@ final class ControllerTest extends TestCase
             Contact::class,
             static fn (Contact $mail) => ($render = $getRender($mail)) &&
                 $mail->hasTo(config('app.super_admin')) &&
-                $mail->subject === 'Confirmation de message' &&
+                $mail->subject === $expectedSubject &&
                 $mail->viewData['content'] === "my@email\n\nMy <strong>message</strong>\non multiple lines." &&
                 preg_match(
                     '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
