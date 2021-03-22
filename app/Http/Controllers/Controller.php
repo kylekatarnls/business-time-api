@@ -40,7 +40,7 @@ use Stripe\Refund;
 use Stripe\StripeClient;
 use Stripe\SubscriptionItem;
 
-class Controller extends AbstractController
+final class Controller extends AbstractController
 {
     use AuthorizesRequests;
     use DispatchesJobs;
@@ -87,13 +87,9 @@ class Controller extends AbstractController
 
     public function postContact(Request $request): RedirectResponse
     {
-        $subject = $request->get('template') === 'exonerate'
-            ? __('Exoneration request submitted')
-            : null;
-
-        $route = $request->get('template') === 'exonerate'
-            ? 'exonerate'
-            : 'contact';
+        [$route, $subject] = $request->get('template') === 'exonerate'
+            ? ['exonerate', __('Exoneration request submitted')]
+            : ['contact', null];
 
         $email = Auth::user()?->email;
 

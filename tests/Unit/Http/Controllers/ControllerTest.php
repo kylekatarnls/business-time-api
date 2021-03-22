@@ -3,6 +3,7 @@
 namespace Tests\Unit\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Contact;
 use App\Models\ApiAuthorization;
 use App\Models\Plan;
 use App\Models\User;
@@ -10,8 +11,12 @@ use App\View\Components\SubscriptionBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
+use Illuminate\View\Factory;
 use ReflectionMethod;
 use SessionHandler;
 use Tests\TestCase;
@@ -25,6 +30,124 @@ final class ControllerTest extends TestCase
 
         $this->assertInstanceOf(RedirectResponse::class, $home);
         $this->assertTrue($home->isRedirect(route('dashboard')));
+    }
+
+    public function testContact(): void
+    {
+        $controller = new Controller();
+        $contact = $controller->contact($this->getRequest())->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $contact);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $contact);
+        $this->assertStringNotContainsString('Message envoyé.', $contact);
+
+        [$request, $session] = $this->getRequestWithSession();
+        $session->put('sent', true);
+        $contact = $controller->contact($request)->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $contact);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $contact);
+        $this->assertStringContainsString('Message envoyé.', $contact);
+
+        $exonerate = $controller->exonerate($this->getRequest());
+
+        $this->assertInstanceOf(RedirectResponse::class, $exonerate);
+        $this->assertSame([
+            "Vous devez d'abord enregistrer votre IP ou domaine puis utiliser la validation pour confirmer que vous en êtes le propriétaire.",
+        ], $exonerate->getSession()->get('errors'));
+        $this->assertTrue($exonerate->isRedirect(route('dashboard')));
+
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+        /** @var ApiAuthorization $auth */
+        $auth = $ziggy->apiAuthorizations()->create([
+            'name'  => 'Website',
+            'type'  => 'domain',
+            'value' => 'web.github.io',
+        ]);
+        $auth->verify();
+        Auth::login($ziggy);
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        $exonerate = $controller->exonerate($request)->render();
+
+        $this->assertMatchesRegularExpression('`<h2[^>]+>\s*Exonération\s*</h2>`', $exonerate);
+        $this->assertDoesNotMatchRegularExpression('`<h2[^>]+>\s*Contact\s*</h2>`', $exonerate);
+
+    }
+
+    public function getPostContactTemplate(): iterable
+    {
+        yield ['contact', 'Confirmation de message', null];
+        yield ['exonerate', "Demande d'exonération soumise", 'exonerate'];
+    }
+
+    /**
+     * @dataProvider getPostContactTemplate
+     */
+    public function testPostContact(string $expectedRoute, string $expectedSubject, ?string $template): void
+    {
+        /** @var Factory $viewFactory */
+        $viewFactory = View::getFacadeRoot();
+        Mail::fake();
+
+        $controller = new Controller();
+        $fields = [
+            'email' => 'my@email',
+            'message' => "My <strong>message</strong>\non multiple lines.",
+        ];
+
+        if ($template) {
+            $fields['template'] = $template;
+        }
+
+        $request = $this->getRequest([], $fields);
+
+        Mail::assertNothingSent();
+
+        $contact = $controller->postContact($request);
+        $this->assertInstanceOf(RedirectResponse::class, $contact);
+        $this->assertTrue($contact->getSession()->get('sent'));
+        $this->assertTrue($contact->isRedirect(route($expectedRoute)));
+
+        $getRender = static fn (Contact $mail) => $viewFactory->make($mail->build()->view, $mail->viewData)->render();
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo('my@email') &&
+                $mail->subject === $expectedSubject &&
+                $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
+                !preg_match('`my@email`', $render) &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.'.
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+'.
+                    'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo('my@email') &&
+                $mail->subject === $expectedSubject &&
+                $mail->viewData['content'] === "My <strong>message</strong>\non multiple lines." &&
+                !preg_match('`my@email`', $render) &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
+        Mail::assertSent(
+            Contact::class,
+            static fn (Contact $mail) => ($render = $getRender($mail)) &&
+                $mail->hasTo(config('app.super_admin')) &&
+                $mail->subject === $expectedSubject &&
+                $mail->viewData['content'] === "my@email\n\nMy <strong>message</strong>\non multiple lines." &&
+                preg_match(
+                    '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
+                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    'my@email<br\s?/?>\n<br\s?/?>\nMy &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
+                    $render),
+        );
     }
 
     public function testIncreaseLimit(): void
@@ -197,12 +320,28 @@ final class ControllerTest extends TestCase
     private function getControllerFor(User $user): array
     {
         $controller = new Controller();
-        $request = new Request();
+        [$request, $session] = $this->getRequestWithSession();
         $request->setUserResolver(static fn () => $user);
+
+        return [$controller, $request, $session];
+    }
+
+    private function getRequestWithSession(array $query = [], array $request = []): array
+    {
+        $request = new Request($query, $request);
         $session = new Store('session', new SessionHandler());
         $request->setLaravelSession($session);
 
-        return [$controller, $request, $session];
+        return [$request, $session];
+    }
+
+    private function getRequest(array $query = [], array $request = []): Request
+    {
+        $request = new Request($query, $request);
+        $session = new Store('session', new SessionHandler());
+        $request->setLaravelSession($session);
+
+        return $request;
     }
 
     private function getDashboardFor(User $user): Response
