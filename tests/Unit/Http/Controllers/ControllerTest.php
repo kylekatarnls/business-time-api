@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
@@ -237,6 +238,29 @@ final class ControllerTest extends TestCase
             'Activer le renouvellement automatique',
             $content,
         );
+
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        /** @var \Illuminate\View\View $view */
+        $view = $controller->plan($request);
+
+        $this->assertInstanceOf(\Illuminate\View\View::class, $view);
+        $data = $view->getData();
+        unset($data['plans']);
+        $this->assertSame([
+            'user' => $ziggy,
+            'credit' => 9.9,
+            'creditCurrency' => null,
+            'closureFees' => null,
+            'stripeKey' => config('stripe.publishable_key'),
+            'numberOfPlans' => 3,
+            'currentPlanId' => 'start',
+            'currentRecurrence' => 'monthly',
+            'selectedPlan' => null,
+            'selectedRecurrence' => null,
+            'selectedCard' => null,
+            'canceled' => null,
+            'paymentError' => null,
+        ], $data);
 
         $subscriptionBilling = new SubscriptionBilling();
         $subscriptionBilling->viewData = ['subscription' => $ziggy->getActiveSubscription()->id];
