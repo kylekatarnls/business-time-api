@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
@@ -238,6 +239,29 @@ final class ControllerTest extends TestCase
             $content,
         );
 
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        /** @var \Illuminate\View\View $view */
+        $view = $controller->plan($request);
+
+        $this->assertInstanceOf(\Illuminate\View\View::class, $view);
+        $data = $view->getData();
+        unset($data['plans']);
+        $this->assertSame([
+            'user' => $ziggy,
+            'credit' => 9.9,
+            'creditCurrency' => null,
+            'closureFees' => null,
+            'stripeKey' => config('stripe.publishable_key'),
+            'numberOfPlans' => 3,
+            'currentPlanId' => 'start',
+            'currentRecurrence' => 'monthly',
+            'selectedPlan' => null,
+            'selectedRecurrence' => null,
+            'selectedCard' => null,
+            'canceled' => null,
+            'paymentError' => null,
+        ], $data);
+
         $subscriptionBilling = new SubscriptionBilling();
         $subscriptionBilling->viewData = ['subscription' => $ziggy->getActiveSubscription()->id];
         $ziggy = $this->reloadUser($ziggy);
@@ -310,6 +334,49 @@ final class ControllerTest extends TestCase
             'premium' => 'Premium',
         ], array_map(static fn (array $plan) => $plan['title'], $data['plans']));
         $this->assertSame('plan', $view->name());
+    }
+
+    public function testRejectIntent(): void
+    {
+        $controller = new Controller();
+        [$request, $session] = $this->getRequestWithSession([
+            'intent' => 'abc123',
+            'error' => 'Refused payment',
+        ]);
+        $session->put('intent-data-abc123', [
+            'planId' => 'A1',
+            'recurrence' => 'monthly',
+            'cardChoice' => '42424242',
+        ]);
+        $response = $controller->rejectIntent($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('plan')));
+        $this->assertSame([
+            'selectedPlan' => 'A1',
+            '_flash' => [
+                'new' => [
+                    0 => 'selectedPlan',
+                    1 => 'selectedRecurrence',
+                    2 => 'selectedCard',
+                    3 => 'paymentError',
+                ],
+                'old' => [],
+            ],
+            'selectedRecurrence' => 'monthly',
+            'selectedCard' => '42424242',
+            'paymentError' => 'Refused payment',
+        ], $response->getSession()->all());
+    }
+
+    public function testGetPlansCredit(): void
+    {
+        $getPlansCredit = new ReflectionMethod(Controller::class, 'getPlansCredit');
+        $getPlansCredit->setAccessible(true);
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+
+        $this->assertSame(0.0, $getPlansCredit->invoke(new Controller(), $ziggy));
     }
 
     /**
