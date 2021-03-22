@@ -312,6 +312,49 @@ final class ControllerTest extends TestCase
         $this->assertSame('plan', $view->name());
     }
 
+    public function testRejectIntent(): void
+    {
+        $controller = new Controller();
+        [$request, $session] = $this->getRequestWithSession([
+            'intent' => 'abc123',
+            'error' => 'Refused payment',
+        ]);
+        $session->put('intent-data-abc123', [
+            'planId' => 'A1',
+            'recurrence' => 'monthly',
+            'cardChoice' => '42424242',
+        ]);
+        $response = $controller->rejectIntent($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('plan')));
+        $this->assertSame([
+            'selectedPlan' => 'A1',
+            '_flash' => [
+                'new' => [
+                    0 => 'selectedPlan',
+                    1 => 'selectedRecurrence',
+                    2 => 'selectedCard',
+                    3 => 'paymentError',
+                ],
+                'old' => [],
+            ],
+            'selectedRecurrence' => 'monthly',
+            'selectedCard' => '42424242',
+            'paymentError' => 'Refused payment',
+        ], $response->getSession()->all());
+    }
+
+    public function testGetPlansCredit(): void
+    {
+        $getPlansCredit = new ReflectionMethod(Controller::class, 'getPlansCredit');
+        $getPlansCredit->setAccessible(true);
+        $ziggy = $this->newZiggy();
+        $ziggy->createAsStripeCustomer();
+
+        $this->assertSame(0.0, $getPlansCredit->invoke(new Controller(), $ziggy));
+    }
+
     /**
      * @param User $user
      *
