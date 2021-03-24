@@ -404,7 +404,8 @@ final class ControllerTest extends TestCase
 
         $this->assertInstanceOf(RedirectResponse::class, $redirection);
         $this->assertTrue($redirection->isRedirect(route('dashboard')));
-        $this->assertSame('Pro', $this->reloadUser($ziggy)->getPaidPlan()['title']);
+        $ziggy = $this->reloadUser($ziggy);
+        $this->assertSame(config('plan.pro.id'), $ziggy->getActiveSubscription()['plan']['product']);
         Auth::logout();
     }
 
