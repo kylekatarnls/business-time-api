@@ -152,15 +152,19 @@ final class ControllerTest extends TestCase
 
     public function testIncreaseLimit(): void
     {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
         $controller = new Controller();
-        $request = new Request();
-        $session = new Store('session', new SessionHandler());
-        $request->setLaravelSession($session);
-        $response = $controller->increaseLimit($request, 'abc');
+        [$request, $session] = $this->getRequestWithSession();
+        $response = $controller->increaseLimit($request, 'foo.bar.com');
 
-        $this->assertSame('abc', $session->get('increase-limit'));
+        $this->assertSame('foo.bar.com', $session->get('increase-limit'));
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertTrue($response->isRedirect(route('dashboard')));
+
+        [$controller, $request, $session] = $this->getControllerFor($ziggy, [], [], ['increase-limit' => 'foo.bar.com']);
+        $controller->dashboard($request);
+        $this->assertSame('foo.bar.com', $session->getOldInput('domain'));
     }
 
     public function testGetGuestPlan(): void
@@ -517,27 +521,25 @@ final class ControllerTest extends TestCase
         array $sessionData = []
     ): array {
         $controller = new Controller();
-        [$request, $session] = $this->getRequestWithSession($query, $request);
-        $session->put($sessionData);
+        [$request, $session] = $this->getRequestWithSession($query, $request, $sessionData);
         $request->setUserResolver(static fn () => $user);
 
         return [$controller, $request, $session];
     }
 
-    private function getRequestWithSession(array $query = [], array $request = []): array
+    private function getRequestWithSession(array $query = [], array $request = [], array $sessionData = []): array
     {
         $request = new Request($query, $request);
         $session = new Store('session', new SessionHandler());
+        $session->put($sessionData);
         $request->setLaravelSession($session);
 
         return [$request, $session];
     }
 
-    private function getRequest(array $query = [], array $request = []): Request
+    private function getRequest(array $query = [], array $request = [], array $sessionData = []): Request
     {
-        $request = new Request($query, $request);
-        $session = new Store('session', new SessionHandler());
-        $request->setLaravelSession($session);
+        [$request] = $this->getRequestWithSession($query, $request, $sessionData);
 
         return $request;
     }
