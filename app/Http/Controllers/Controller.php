@@ -48,6 +48,9 @@ final class Controller extends AbstractController
 
     private ?StripeClient $stripeClient = null;
 
+    /** @var array<int, Collection<ApiAuthorization>> */
+    private array $apiAuthorizations = [];
+
     public function home(): RedirectResponse
     {
         return redirect('dashboard');
@@ -175,7 +178,7 @@ final class Controller extends AbstractController
             'onBehalf'              => $onBehalf,
             'domain'                => $domain,
             'name'                  => old('name') ?: ($isIP
-                ? 'Server'
+                ? __('Server')
                 : preg_replace('/\.[a-z]+$/', '', $domain ?: '')),
             'subDomain'             => $subDomain,
             'ip'                    => $ip,
@@ -545,13 +548,10 @@ final class Controller extends AbstractController
 
     private function getApiAuthorizationsByType(string $type, ?User $user = null): Collection
     {
-        static $apiAuthorizations = null;
+        $id = $user?->id ?? 0;
+        $this->apiAuthorizations[$id] ??= $this->getApiAuthorizations($user);
 
-        if ($apiAuthorizations === null) {
-            $apiAuthorizations = $this->getApiAuthorizations($user);
-        }
-
-        return $apiAuthorizations
+        return $this->apiAuthorizations[$id]
             ->filter(static fn(ApiAuthorization $apiAuthorization) => $apiAuthorization->type === $type);
     }
 

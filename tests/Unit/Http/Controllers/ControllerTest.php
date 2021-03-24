@@ -11,7 +11,6 @@ use App\View\Components\SubscriptionBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -200,6 +199,60 @@ final class ControllerTest extends TestCase
             'product'  => 'free',
             'currency' => 'eur',
         ], $plan->getArrayCopy());
+    }
+
+    public function testDashboard(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $dashboard = $this->getDashboardFor($ziggy, [], [], ['property' => 'foo.bar.com'])->getContent();
+
+        $this->assertStringContainsString('value="bar.com"', $dashboard);
+        $this->assertStringContainsString('name="name" value="bar"', $dashboard);
+        $this->assertStringContainsString('value="domain" checked', $dashboard);
+
+        $dashboard = $this->getDashboardFor($ziggy, ['property' => '12.52.63.2'])->getContent();
+
+        $this->assertStringContainsString('value="12.52.63.2"', $dashboard);
+        $this->assertStringContainsString('name="name" value="Serveur"', $dashboard);
+        $this->assertStringContainsString('value="ip" checked', $dashboard);
+
+        $ziggy->apiAuthorizations()->create([
+            'name'  => 'Ziggy site',
+            'type'  => 'domain',
+            'value' => 'ziggy.com',
+        ]);
+        $ziggy = $this->reloadUser($ziggy);
+
+        $kt = $this->newUser('KT Tunstall', 'hard.girl@tunstall.com');
+        $kt->apiAuthorizations()->create([
+            'name'  => 'KT Tunstall',
+            'type'  => 'domain',
+            'value' => 'tunstall.com',
+        ]);
+        $kt = $this->reloadUser($kt);
+
+        $dashboard = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringContainsString('Ziggy site', $dashboard);
+        $this->assertStringContainsString('ziggy.com', $dashboard);
+        $this->assertStringNotContainsString('KT Tunstall', $dashboard);
+        $this->assertStringNotContainsString('tunstall.com', $dashboard);
+
+        $dashboard = $this->getDashboardFor($ziggy, [], [], [], (string) $kt->id)->getContent();
+
+        $this->assertStringContainsString('Ziggy site', $dashboard);
+        $this->assertStringContainsString('ziggy.com', $dashboard);
+        $this->assertStringNotContainsString('KT Tunstall', $dashboard);
+        $this->assertStringNotContainsString('tunstall.com', $dashboard);
+
+        $ziggy->email = config('app.super_admin');
+        $dashboard = $this->getDashboardFor($ziggy, [], [], [], (string) $kt->id)->getContent();
+
+        $this->assertStringContainsString('KT Tunstall', $dashboard);
+        $this->assertStringContainsString('tunstall.com', $dashboard);
+        $this->assertStringNotContainsString('Ziggy site', $dashboard);
+        $this->assertStringNotContainsString('ziggy.com', $dashboard);
     }
 
     public function testSubscription(): void
@@ -489,10 +542,15 @@ final class ControllerTest extends TestCase
         return $request;
     }
 
-    private function getDashboardFor(User $user): Response
-    {
-        [$controller, $request] = $this->getControllerFor($user);
+    private function getDashboardFor(
+        User $user,
+        array $query = [],
+        array $request = [],
+        array $sessionData = [],
+        ?string $userId = null
+    ): Response {
+        [$controller, $request] = $this->getControllerFor($user, $query, $request, $sessionData);
 
-        return $controller->dashboard($request);
+        return $controller->dashboard($request, $userId);
     }
 }

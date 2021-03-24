@@ -17,6 +17,9 @@ abstract class TestCase extends BaseTestCase
 
     protected ?StripeClient $stripeClient = null;
 
+    /** @var array<User> */
+    protected array $testUsers = [];
+
     protected function setUp(): void
     {
         Bespin::up($this);
@@ -26,25 +29,47 @@ abstract class TestCase extends BaseTestCase
 
     protected function tearDown(): void
     {
+        foreach ($this->testUsers as $user) {
+            $this->removeUser($user);
+        }
+
         parent::tearDown();
 
         Bespin::down();
     }
 
+    protected function removeUser($users): void
+    {
+        if ($users instanceof User) {
+            $users->apiAuthorizations()->forceDelete();
+            $users->forceDelete();
+
+            return;
+        }
+
+        foreach ($users->withTrashed()->get() as $user) {
+            $this->removeUser($user);
+        }
+    }
+
     protected function removeUserByEmail(string $email): void
     {
-        User::where(['email' => $email])->forceDelete();
+        $this->removeUser(User::where(['email' => $email]));
     }
 
     protected function newUser(string $name, string $email, array $properties = []): User
     {
         $this->removeUserByEmail($email);
 
-        return User::create(array_merge([
+        $user = User::create(array_merge([
             'name'     => $name,
             'email'    => $email,
             'password' => Hash::make('G0¤d5tr@ñ9P##55wo&d'),
         ], $properties));
+
+        $this->testUsers[] = $user;
+
+        return $user;
     }
 
     protected function newZiggy(): User
