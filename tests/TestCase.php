@@ -68,15 +68,14 @@ abstract class TestCase extends BaseTestCase
         return $this->stripeClient;
     }
 
-    protected function getPaymentMethod(): PaymentMethod
+    protected function getPaymentMethod(string $number = '4242424242424242'): PaymentMethod
     {
         $cardExpiration = now()->addMonths(2);
-        $stripe = $this->getStripeClient();
 
-        return $stripe->paymentMethods->create([
+        return $this->getStripeClient()->paymentMethods->create([
             'type' => 'card',
             'card' => [
-                'number' => '4242424242424242',
+                'number' => $number,
                 'exp_month' => $cardExpiration->month,
                 'exp_year' => $cardExpiration->year,
                 'cvc' => '314',

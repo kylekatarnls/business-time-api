@@ -244,6 +244,7 @@ final class ControllerTest extends TestCase
         $view = $controller->plan($request);
 
         $this->assertInstanceOf(\Illuminate\View\View::class, $view);
+        $this->assertSame('plan', $view->getName());
         $data = $view->getData();
         unset($data['plans']);
         $this->assertSame([
@@ -336,6 +337,78 @@ final class ControllerTest extends TestCase
         $this->assertSame('plan', $view->name());
     }
 
+    public function testConfirmIntent(): void
+    {
+        $stripe = $this->getStripeClient();
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $paymentMethod = $this->getPaymentMethod('4000000000003220');
+        [$controller, $request, $session] = $this->getControllerFor($ziggy, [
+            'plan' => 'pro',
+            'recurrence' => 'monthly',
+            'card' => '4000000000003220',
+            'stripePaymentMethod' => $paymentMethod->id,
+        ]);
+
+        $redirection = $controller->subscribePlan($request, 'not-exist');
+        $this->assertInstanceOf(RedirectResponse::class, $redirection);
+        $this->assertTrue($redirection->isRedirect(route('plan')));
+        $expectedSession = [
+            'selectedPlan' => 'not-exist',
+            '_flash' => [
+                'new' => [
+                    0 => 'selectedPlan',
+                    1 => 'selectedRecurrence',
+                    2 => 'canceled',
+                    3 => 'selectedCard',
+                ],
+                'old' => [],
+            ],
+            'selectedRecurrence' => 'monthly',
+            'canceled' => 'not-exist',
+            'selectedCard' => '4000000000003220',
+        ];
+        $this->assertSame(
+            $expectedSession,
+            Arr::only($redirection->getSession()->all(), array_keys($expectedSession)),
+        );
+
+        $intentView = $controller->subscribe($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $intentView);
+        $this->assertSame('payment-authentication', $intentView->getName());
+        $data = $intentView->getData();
+        $this->assertSame($ziggy, Arr::pull($data, 'user'));
+        $id = Arr::pull($data, 'intent')->id;
+        $this->assertSame([], $data);
+        $intentData = $session->get("intent-data-$id");
+        $this->assertIsArray($intentData);
+
+        $stripe->paymentIntents->confirm($id);
+
+        [$controller, $request] = $this->getControllerFor($ziggy, ['intent' => $id], [], [
+            "intent-data-$id" => $intentData
+        ]);
+        $intentView = $controller->confirmIntent($request);
+
+        $this->assertInstanceOf(\Illuminate\View\View::class, $intentView);
+        $this->assertSame('payment-authentication', $intentView->getName());
+
+        $paymentMethod = $this->getPaymentMethod();
+        [$controller, $request] = $this->getControllerFor($ziggy, ['intent' => $id], [], [
+            "intent-data-$id" => array_merge($intentData, [
+                'cardChoice' => '4242424242424242',
+                'stripePaymentMethod' => $paymentMethod->id,
+            ]),
+        ]);
+        $redirection = $controller->confirmIntent($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $redirection);
+        $this->assertTrue($redirection->isRedirect(route('dashboard')));
+        $ziggy = $this->reloadUser($ziggy);
+        $this->assertSame(config('plan.pro.id'), $ziggy->getActiveSubscription()['plan']['product']);
+        Auth::logout();
+    }
+
     public function testRejectIntent(): void
     {
         $controller = new Controller();
@@ -384,10 +457,15 @@ final class ControllerTest extends TestCase
      *
      * @return array{Controller, Request, Store}
      */
-    private function getControllerFor(User $user): array
-    {
+    private function getControllerFor(
+        User $user,
+        array $query = [],
+        array $request = [],
+        array $sessionData = []
+    ): array {
         $controller = new Controller();
-        [$request, $session] = $this->getRequestWithSession();
+        [$request, $session] = $this->getRequestWithSession($query, $request);
+        $session->put($sessionData);
         $request->setUserResolver(static fn () => $user);
 
         return [$controller, $request, $session];
