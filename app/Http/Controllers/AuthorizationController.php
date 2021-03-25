@@ -26,7 +26,7 @@ final class AuthorizationController extends AbstractController
         $value = rtrim(preg_replace('`^https?://`', '', trim($request->get($type) ?? '')), '/');
 
         if (!AuthorizationFactory::fromType($type)->accept($value)) {
-            return redirect('dashboard')
+            return redirect(route('dashboard'))
                 ->withInput()
                 ->with('authorisationsErrors', [$type => 'format']);
         }
@@ -42,7 +42,7 @@ final class AuthorizationController extends AbstractController
         } catch (QueryException $exception) {
             Log::warning($exception);
 
-            return redirect('dashboard')
+            return redirect(route('dashboard'))
                 ->withInput()
                 ->with('authorisationsErrors', [$type => match ((string) $exception->getCode()) {
                     '23000' => 'duplicate',
@@ -50,7 +50,7 @@ final class AuthorizationController extends AbstractController
                 }]);
         }
 
-        return redirect('dashboard');
+        return redirect(route('dashboard'));
     }
 
     public function delete(Request $request): RedirectResponse
@@ -67,7 +67,7 @@ final class AuthorizationController extends AbstractController
         self::clearCache('ip', $value);
         self::clearCache('domain', $value);
 
-        return redirect('dashboard');
+        return redirect(route('dashboard'));
     }
 
     public function getVerifyToken(string $ipOrDomain): BinaryFileResponse
@@ -96,7 +96,7 @@ final class AuthorizationController extends AbstractController
             self::clearCache($type, $value);
         }
 
-        return redirect('dashboard')->with([
+        return redirect(route('dashboard'))->with([
             'verifyError' => $error,
             'verifiedAuthorization' => $authorization->id,
         ]);

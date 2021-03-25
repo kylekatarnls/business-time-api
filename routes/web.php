@@ -31,7 +31,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(static function () {
     Route::post('/plan/confirm-intent', [Controller::class, 'confirmIntent'])->name('confirm-intent');
     Route::post('/plan/reject-intent', [Controller::class, 'rejectIntent'])->name('reject-intent');
     Route::get('/plan/exonerate', [Controller::class, 'exonerate'])->name('exonerate');
-    Route::post('/subscribe/', [Controller::class, 'subscribe'])->name('subscribe');
+    Route::post('/subscribe', [Controller::class, 'subscribe'])->name('subscribe');
     Route::post('/subscribe/{plan}', [Controller::class, 'subscribePlan'])->name('subscribe-plan');
     Route::post('/subscribe/{plan}/cancel', [Controller::class, 'cancelSubscribe'])->name('subscribe-cancel');
     Route::get('/billing', [Controller::class, 'billingPortal'])->name('billing');

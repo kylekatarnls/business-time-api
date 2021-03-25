@@ -167,6 +167,22 @@ final class ControllerTest extends TestCase
         $this->assertSame('foo.bar.com', $session->getOldInput('domain'));
     }
 
+    public function testCancelSubscribe(): void
+    {
+        $controller = new Controller();
+        $response = $controller->cancelSubscribe('pro');
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('plan')));
+        $this->assertSame([
+            'canceled' => 'pro',
+            '_flash' => [
+                'new' => ['canceled'],
+                'old' => [],
+            ]
+        ], $response->getSession()->all());
+    }
+
     public function testGetGuestPlan(): void
     {
         $controller = new Controller();

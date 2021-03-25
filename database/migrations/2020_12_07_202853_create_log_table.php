@@ -25,7 +25,7 @@ class CreateLogTable extends Migration
                 $table->text('referer');
                 $table->string('domain', 255)->index();
             });
-        } catch (QueryException $exception) {
+        } catch (QueryException) {
             DB::statement('CREATE TABLE IF NOT EXISTS `log` (
               `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,
               `date` datetime NOT NULL,
