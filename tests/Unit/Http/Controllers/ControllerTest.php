@@ -579,8 +579,25 @@ final class ControllerTest extends TestCase
         $getPlansCredit->setAccessible(true);
         $ziggy = $this->newZiggy();
         $ziggy->createAsStripeCustomer();
+        $paymentMethod = $this->getPaymentMethod();
+        $ziggy->addPaymentMethod($paymentMethod);
 
         $this->assertSame(0.0, $getPlansCredit->invoke(new Controller(), $ziggy));
+
+        $ziggy->charge(2500, $paymentMethod);
+        $payment = $ziggy->charge(499, $paymentMethod);
+
+        $this->assertSame(29.99, $getPlansCredit->invoke(new Controller(), $ziggy));
+        Auth::login($ziggy);
+        $this->assertSame(29.99, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        $ziggy->refund($payment->id);
+
+        $this->assertSame(25.0, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        $this->subscribePlan($ziggy, 'premium', 'yearly');
+
+        $this->assertSame(374.0, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
     }
 
     /**

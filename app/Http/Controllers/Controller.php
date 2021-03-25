@@ -660,16 +660,16 @@ final class Controller extends AbstractController
         $credit = 0.0;
         $customerId = $user?->stripeId();
 
-        foreach ($this->getUserCharges($customerId) as $charge) {
-            $credit += $charge->amount_received / 100;
-        }
+        // foreach ($this->getUserCharges($customerId) as $charge) {
+        //     $credit += $charge->amount_captured;
+        // }
 
         foreach ($this->getUserPaymentsIntents($customerId) as $paymentIntent) {
-            $credit += $paymentIntent->amount_received / 100;
+            $credit += $paymentIntent->amount_received;
         }
 
         foreach (($user?->getRefunds() ?? []) as $refund) {
-            $credit -= $refund->getAmount();
+            $credit -= $refund->cents_amount;
         }
 
         foreach ($user->getSubscriptions($keys) as $subscription) {
