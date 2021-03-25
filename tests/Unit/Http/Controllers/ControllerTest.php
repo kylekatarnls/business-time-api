@@ -365,6 +365,11 @@ final class ControllerTest extends TestCase
         $ziggy = $this->reloadUser($ziggy);
         Auth::login($ziggy);
         [$controller, $request] = $this->getControllerFor($ziggy);
+        $view = $controller->plan($request);
+
+        $this->assertStringContainsString('ou 199,00 € / an', $view->render());
+
+        [$controller, $request] = $this->getControllerFor($ziggy);
         $response = $controller->autorenew($request);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
