@@ -42,6 +42,7 @@ abstract class TestCase extends BaseTestCase
     {
         if ($users instanceof User) {
             $users->apiAuthorizations()->forceDelete();
+            $users->subscriptions()->forceDelete();
             $users->forceDelete();
 
             return;

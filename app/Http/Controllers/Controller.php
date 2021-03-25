@@ -27,12 +27,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
+use Laravel\Cashier\Exceptions\IncompletePayment;
 use Laravel\Cashier\Exceptions\PaymentActionRequired;
 use Laravel\Cashier\Exceptions\PaymentFailure;
 use Laravel\Cashier\Subscription as CashierSubscription;
 use Stripe\Charge;
 use Stripe\Collection as StripeCollection;
 use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\CardException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\Invoice;
 use Stripe\PaymentIntent;
@@ -382,7 +384,7 @@ final class Controller extends AbstractController
                 'user' => $user,
                 'intent' => $intent,
             ]);
-        } catch (InvalidRequestException | PaymentFailure | PlanOfferException $exception) {
+        } catch (ApiErrorException | IncompletePayment | PlanOfferException $exception) {
             Log::critical($exception);
 
             return $this->goToPlan([
@@ -418,9 +420,8 @@ final class Controller extends AbstractController
      *
      * @return CashierSubscription
      *
-     * @throws InvalidRequestException
      * @throws PaymentActionRequired
-     * @throws PaymentFailure
+     * @throws IncompletePayment
      * @throws ApiErrorException
      * @throws PlanOfferException
      */

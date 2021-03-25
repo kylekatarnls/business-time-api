@@ -431,6 +431,43 @@ final class ControllerTest extends TestCase
         $this->assertSame('plan', $view->name());
     }
 
+    public function testPaymentError(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $paymentMethod = $this->getPaymentMethod('4000000000000002');
+        [$controller, $request] = $this->getControllerFor($ziggy, [
+            'plan' => 'pro',
+            'recurrence' => 'monthly',
+            'card' => '4000000000000002',
+            'stripePaymentMethod' => $paymentMethod->id,
+        ]);
+
+        $redirection = $controller->subscribe($request);
+        $this->assertInstanceOf(RedirectResponse::class, $redirection);
+        $this->assertTrue($redirection->isRedirect(route('plan')));
+        $expectedSession = [
+            'selectedPlan' => 'pro',
+            '_flash' => [
+                'new' => [
+                    'selectedPlan',
+                    'selectedRecurrence',
+                    'selectedCard',
+                    'paymentError'
+                ],
+                'old' => [],
+            ],
+            'selectedRecurrence' => 'monthly',
+            'selectedCard' => '4000000000000002',
+            'paymentError' => 'Your card was declined.',
+        ];
+        $this->assertSame(
+            $expectedSession,
+            Arr::only($redirection->getSession()->all(), array_keys($expectedSession)),
+        );
+        Auth::logout();
+    }
+
     public function testConfirmIntent(): void
     {
         $stripe = $this->getStripeClient();
@@ -451,10 +488,10 @@ final class ControllerTest extends TestCase
             'selectedPlan' => 'not-exist',
             '_flash' => [
                 'new' => [
-                    0 => 'selectedPlan',
-                    1 => 'selectedRecurrence',
-                    2 => 'canceled',
-                    3 => 'selectedCard',
+                    'selectedPlan',
+                    'selectedRecurrence',
+                    'canceled',
+                    'selectedCard',
                 ],
                 'old' => [],
             ],
@@ -523,10 +560,10 @@ final class ControllerTest extends TestCase
             'selectedPlan' => 'A1',
             '_flash' => [
                 'new' => [
-                    0 => 'selectedPlan',
-                    1 => 'selectedRecurrence',
-                    2 => 'selectedCard',
-                    3 => 'paymentError',
+                    'selectedPlan',
+                    'selectedRecurrence',
+                    'selectedCard',
+                    'paymentError',
                 ],
                 'old' => [],
             ],
