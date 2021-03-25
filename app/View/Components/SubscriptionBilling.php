@@ -35,7 +35,7 @@ class SubscriptionBilling extends Component
 
         Log::warning('User ' . $user->id . ' cancelled subscription ' . $subscription->ends_at);
 
-        $this->redirect('dashboard');
+        $this->redirect(route('dashboard'));
     }
 
     public function render(): View

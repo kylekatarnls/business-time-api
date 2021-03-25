@@ -11,7 +11,6 @@ use App\View\Components\SubscriptionBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Mail\Mailer;
 use Illuminate\Session\Store;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -153,15 +152,35 @@ final class ControllerTest extends TestCase
 
     public function testIncreaseLimit(): void
     {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
         $controller = new Controller();
-        $request = new Request();
-        $session = new Store('session', new SessionHandler());
-        $request->setLaravelSession($session);
-        $response = $controller->increaseLimit($request, 'abc');
+        [$request, $session] = $this->getRequestWithSession();
+        $response = $controller->increaseLimit($request, 'foo.bar.com');
 
-        $this->assertSame('abc', $session->get('increase-limit'));
+        $this->assertSame('foo.bar.com', $session->get('increase-limit'));
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertTrue($response->isRedirect(route('dashboard')));
+
+        [$controller, $request, $session] = $this->getControllerFor($ziggy, [], [], ['increase-limit' => 'foo.bar.com']);
+        $controller->dashboard($request);
+        $this->assertSame('foo.bar.com', $session->getOldInput('domain'));
+    }
+
+    public function testCancelSubscribe(): void
+    {
+        $controller = new Controller();
+        $response = $controller->cancelSubscribe('pro');
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertTrue($response->isRedirect(route('plan')));
+        $this->assertSame([
+            'canceled' => 'pro',
+            '_flash' => [
+                'new' => ['canceled'],
+                'old' => [],
+            ]
+        ], $response->getSession()->all());
     }
 
     public function testGetGuestPlan(): void
@@ -200,6 +219,60 @@ final class ControllerTest extends TestCase
             'product'  => 'free',
             'currency' => 'eur',
         ], $plan->getArrayCopy());
+    }
+
+    public function testDashboard(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $dashboard = $this->getDashboardFor($ziggy, [], [], ['property' => 'foo.bar.com'])->getContent();
+
+        $this->assertStringContainsString('value="bar.com"', $dashboard);
+        $this->assertStringContainsString('name="name" value="bar"', $dashboard);
+        $this->assertStringContainsString('value="domain" checked', $dashboard);
+
+        $dashboard = $this->getDashboardFor($ziggy, ['property' => '12.52.63.2'])->getContent();
+
+        $this->assertStringContainsString('value="12.52.63.2"', $dashboard);
+        $this->assertStringContainsString('name="name" value="Serveur"', $dashboard);
+        $this->assertStringContainsString('value="ip" checked', $dashboard);
+
+        $ziggy->apiAuthorizations()->create([
+            'name'  => 'Ziggy site',
+            'type'  => 'domain',
+            'value' => 'ziggy.com',
+        ]);
+        $ziggy = $this->reloadUser($ziggy);
+
+        $kt = $this->newUser('KT Tunstall', 'hard.girl@tunstall.com');
+        $kt->apiAuthorizations()->create([
+            'name'  => 'KT Tunstall',
+            'type'  => 'domain',
+            'value' => 'tunstall.com',
+        ]);
+        $kt = $this->reloadUser($kt);
+
+        $dashboard = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertStringContainsString('Ziggy site', $dashboard);
+        $this->assertStringContainsString('ziggy.com', $dashboard);
+        $this->assertStringNotContainsString('KT Tunstall', $dashboard);
+        $this->assertStringNotContainsString('tunstall.com', $dashboard);
+
+        $dashboard = $this->getDashboardFor($ziggy, [], [], [], (string) $kt->id)->getContent();
+
+        $this->assertStringContainsString('Ziggy site', $dashboard);
+        $this->assertStringContainsString('ziggy.com', $dashboard);
+        $this->assertStringNotContainsString('KT Tunstall', $dashboard);
+        $this->assertStringNotContainsString('tunstall.com', $dashboard);
+
+        $ziggy->email = config('app.super_admin');
+        $dashboard = $this->getDashboardFor($ziggy, [], [], [], (string) $kt->id)->getContent();
+
+        $this->assertStringContainsString('KT Tunstall', $dashboard);
+        $this->assertStringContainsString('tunstall.com', $dashboard);
+        $this->assertStringNotContainsString('Ziggy site', $dashboard);
+        $this->assertStringNotContainsString('ziggy.com', $dashboard);
     }
 
     public function testSubscription(): void
@@ -291,6 +364,11 @@ final class ControllerTest extends TestCase
 
         $ziggy = $this->reloadUser($ziggy);
         Auth::login($ziggy);
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        $view = $controller->plan($request);
+
+        $this->assertStringContainsString('ou 199,00 € / an', $view->render());
+
         [$controller, $request] = $this->getControllerFor($ziggy);
         $response = $controller->autorenew($request);
 
@@ -464,35 +542,38 @@ final class ControllerTest extends TestCase
         array $sessionData = []
     ): array {
         $controller = new Controller();
-        [$request, $session] = $this->getRequestWithSession($query, $request);
-        $session->put($sessionData);
+        [$request, $session] = $this->getRequestWithSession($query, $request, $sessionData);
         $request->setUserResolver(static fn () => $user);
 
         return [$controller, $request, $session];
     }
 
-    private function getRequestWithSession(array $query = [], array $request = []): array
+    private function getRequestWithSession(array $query = [], array $request = [], array $sessionData = []): array
     {
         $request = new Request($query, $request);
         $session = new Store('session', new SessionHandler());
+        $session->put($sessionData);
         $request->setLaravelSession($session);
 
         return [$request, $session];
     }
 
-    private function getRequest(array $query = [], array $request = []): Request
+    private function getRequest(array $query = [], array $request = [], array $sessionData = []): Request
     {
-        $request = new Request($query, $request);
-        $session = new Store('session', new SessionHandler());
-        $request->setLaravelSession($session);
+        [$request] = $this->getRequestWithSession($query, $request, $sessionData);
 
         return $request;
     }
 
-    private function getDashboardFor(User $user): Response
-    {
-        [$controller, $request] = $this->getControllerFor($user);
+    private function getDashboardFor(
+        User $user,
+        array $query = [],
+        array $request = [],
+        array $sessionData = [],
+        ?string $userId = null
+    ): Response {
+        [$controller, $request] = $this->getControllerFor($user, $query, $request, $sessionData);
 
-        return $controller->dashboard($request);
+        return $controller->dashboard($request, $userId);
     }
 }

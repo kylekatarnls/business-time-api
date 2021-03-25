@@ -22,7 +22,7 @@ final class AdminController extends AbstractController
     {
         Auth::loginUsingId($id);
 
-        return redirect('dashboard');
+        return redirect(route('dashboard'));
     }
 
     public function errors(): RedirectResponse

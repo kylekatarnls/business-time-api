@@ -48,9 +48,12 @@ final class Controller extends AbstractController
 
     private ?StripeClient $stripeClient = null;
 
+    /** @var array<int, Collection<ApiAuthorization>> */
+    private array $apiAuthorizations = [];
+
     public function home(): RedirectResponse
     {
-        return redirect('dashboard');
+        return redirect(route('dashboard'));
     }
 
     public function contact(Request $request): View
@@ -71,7 +74,7 @@ final class Controller extends AbstractController
         $properties = $user?->getAuthorizations();
 
         if (empty($properties)) {
-            return redirect('dashboard')->with('errors', [
+            return redirect(route('dashboard'))->with('errors', [
                 __('You need first to register your IP or domain then use the validation to confirm you own it.'),
             ]);
         }
@@ -175,7 +178,7 @@ final class Controller extends AbstractController
             'onBehalf'              => $onBehalf,
             'domain'                => $domain,
             'name'                  => old('name') ?: ($isIP
-                ? 'Server'
+                ? __('Server')
                 : preg_replace('/\.[a-z]+$/', '', $domain ?: '')),
             'subDomain'             => $subDomain,
             'ip'                    => $ip,
@@ -233,7 +236,7 @@ final class Controller extends AbstractController
             Log::info('User ' . $user->id . ' re-enabled autorenew for ' . $subscription->id);
         }
 
-        return redirect('dashboard');
+        return redirect(route('dashboard'));
     }
 
     public function plan(Request $request): View
@@ -250,17 +253,22 @@ final class Controller extends AbstractController
                 'id' => $item->id,
                 'price' => $item->price->id,
             ], iterator_to_array($activeSubscription->items));
-            $invoice = Invoice::upcoming([
-                'customer'                    => $activeSubscription->customer,
-                'subscription'                => $activeSubscription->id,
-                'subscription_items'          => $items,
-                'subscription_proration_date' => time() + 600,
-            ]);
 
-            $remainingCreditCents = (int) $invoice['amount_remaining'] ?? 0;
+            try {
+                $invoice = Invoice::upcoming([
+                    'customer'                    => $activeSubscription->customer,
+                    'subscription'                => $activeSubscription->id,
+                    'subscription_items'          => $items,
+                    'subscription_proration_date' => time() + 600,
+                ]);
 
-            if ($remainingCreditCents > 0) {
-                $credit = 0.01 * $remainingCreditCents;
+                $remainingCreditCents = (int) $invoice['amount_remaining'] ?? 0;
+
+                if ($remainingCreditCents > 0) {
+                    $credit = 0.01 * $remainingCreditCents;
+                }
+            } catch (InvalidRequestException) {
+                // No credit
             }
         }
 
@@ -390,7 +398,7 @@ final class Controller extends AbstractController
 
     public function cancelSubscribe(string $plan): RedirectResponse
     {
-        return redirect('subscribe-cancel')->with('canceled', $plan);
+        return $this->goToPlan(['canceled' => $plan]);
     }
 
     public function billingPortal(Request $request): RedirectResponse
@@ -545,13 +553,10 @@ final class Controller extends AbstractController
 
     private function getApiAuthorizationsByType(string $type, ?User $user = null): Collection
     {
-        static $apiAuthorizations = null;
+        $id = $user?->id ?? 0;
+        $this->apiAuthorizations[$id] ??= $this->getApiAuthorizations($user);
 
-        if ($apiAuthorizations === null) {
-            $apiAuthorizations = $this->getApiAuthorizations($user);
-        }
-
-        return $apiAuthorizations
+        return $this->apiAuthorizations[$id]
             ->filter(static fn(ApiAuthorization $apiAuthorization) => $apiAuthorization->type === $type);
     }
 
@@ -606,7 +611,7 @@ final class Controller extends AbstractController
 
     private function goToPlan(...$with): RedirectResponse
     {
-        return redirect('plan')->with(...$with);
+        return redirect(route('plan'))->with(...$with);
     }
 
     /**
