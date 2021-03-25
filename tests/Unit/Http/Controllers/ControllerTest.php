@@ -389,6 +389,22 @@ final class ControllerTest extends TestCase
         );
     }
 
+    public function testBillingPortal(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+
+        [$controller, $request] = $this->getControllerFor($ziggy);
+        /** @var RedirectResponse $redirection */
+        $redirection = $controller->billingPortal($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $redirection);
+        $this->assertMatchesRegularExpression(
+            '`^https://billing\.stripe\.com/session/[A-Za-z0-9_-]+$`',
+            $redirection->getTargetUrl(),
+        );
+    }
+
     public function testPlan(): void
     {
         $ziggy = $this->newZiggy();
