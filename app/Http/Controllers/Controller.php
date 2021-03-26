@@ -34,7 +34,6 @@ use Laravel\Cashier\Subscription as CashierSubscription;
 use Stripe\Charge;
 use Stripe\Collection as StripeCollection;
 use Stripe\Exception\ApiErrorException;
-use Stripe\Exception\CardException;
 use Stripe\Exception\InvalidRequestException;
 use Stripe\Invoice;
 use Stripe\PaymentIntent;
@@ -617,6 +616,7 @@ final class Controller extends AbstractController
 
     /**
      * @return StripeCollection|Charge[]
+     * @codeCoverageIgnore
      */
     private function getUserCharges(?string $customerId): StripeCollection
     {
@@ -637,6 +637,7 @@ final class Controller extends AbstractController
 
     /**
      * @return StripeCollection|Refund[]
+     * @codeCoverageIgnore
      */
     private function getUserRefunds(?string $customerId): StripeCollection
     {
@@ -660,16 +661,16 @@ final class Controller extends AbstractController
         $credit = 0.0;
         $customerId = $user?->stripeId();
 
-        foreach ($this->getUserCharges($customerId) as $charge) {
-            $credit += $charge->amount_received / 100;
-        }
+        // foreach ($this->getUserCharges($customerId) as $charge) {
+        //     $credit += $charge->amount_captured;
+        // }
 
         foreach ($this->getUserPaymentsIntents($customerId) as $paymentIntent) {
-            $credit += $paymentIntent->amount_received / 100;
+            $credit += $paymentIntent->amount_received;
         }
 
         foreach (($user?->getRefunds() ?? []) as $refund) {
-            $credit -= $refund->getAmount();
+            $credit -= $refund->cents_amount;
         }
 
         foreach ($user->getSubscriptions($keys) as $subscription) {
@@ -679,8 +680,8 @@ final class Controller extends AbstractController
                 $end = CarbonImmutable::createFromTimestamp($stripeSubscription['current_period_end']);
                 $total = (float) $end->floatDiffInSeconds($start);
                 $remaining = (float) $end->floatDiffInSeconds();
-                $credit += (float) $subscription->latestInvoice()->rawTotal() *
-                    max(0, min(1, $remaining / $total));
+                $credit -= (float) $subscription->latestInvoice()->rawTotal() *
+                    max(0, min(1, 1 - $remaining / $total));
             }
         }
 

@@ -8,6 +8,8 @@ use App\Models\ApiAuthorization;
 use App\Models\Plan;
 use App\Models\User;
 use App\View\Components\SubscriptionBilling;
+use Carbon\Carbonite;
+use Carbon\Carbonite\Attribute\Freeze;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -573,14 +575,41 @@ final class ControllerTest extends TestCase
         ], $response->getSession()->all());
     }
 
+    #[Freeze]
     public function testGetPlansCredit(): void
     {
         $getPlansCredit = new ReflectionMethod(Controller::class, 'getPlansCredit');
         $getPlansCredit->setAccessible(true);
         $ziggy = $this->newZiggy();
         $ziggy->createAsStripeCustomer();
+        $paymentMethod = $this->getPaymentMethod();
+        $ziggy->addPaymentMethod($paymentMethod);
 
         $this->assertSame(0.0, $getPlansCredit->invoke(new Controller(), $ziggy));
+
+        $ziggy->charge(2500, $paymentMethod);
+        $payment = $ziggy->charge(499, $paymentMethod);
+
+        $this->assertSame(29.99, $getPlansCredit->invoke(new Controller(), $ziggy));
+        Auth::login($ziggy);
+        $this->assertSame(29.99, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        $ziggy->refund($payment->id);
+
+        $this->assertSame(25.0, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        $this->subscribePlan($ziggy, 'premium', 'yearly');
+
+        $this->assertSame(374.0, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        $ziggy = $this->reloadUser($ziggy);
+        Auth::login($ziggy);
+
+        $this->assertSame(374.0, $getPlansCredit->invoke($this->getControllerFor($ziggy)[0]));
+
+        Carbonite::elapse('6 months');
+
+        $this->assertSame(200.0, round($getPlansCredit->invoke($this->getControllerFor($ziggy)[0]), -1));
     }
 
     /**
