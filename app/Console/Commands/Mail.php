@@ -40,6 +40,7 @@ final class Mail extends Command
             $users,
             fn (int $userId) => $this->sendMailContent($content, $userId),
         );
+        $this->getOutput()->writeln('');
 
         return 0;
     }
