@@ -365,7 +365,7 @@ final class User extends Authenticatable
         );
     }
 
-    public function getPaidPlan(?array $planKeys = null): ?Plan
+    public function getPaidPlan(?array $planKeys = null): ?string
     {
         return collect($planKeys ?? array_keys(Plan::getPlansData()))->first(
             fn(string $planId) => $this->subscribed($planId),
@@ -374,7 +374,7 @@ final class User extends Authenticatable
 
     public function getPlan(?array $planKeys = null): Plan
     {
-        return $this->getPaidPlan($planKeys) ?? Plan::fromId('free');
+        return  Plan::fromId($this->getPaidPlan($planKeys) ?? 'free');
     }
 
     public function getPaidRequests(?int $month = null): ?int

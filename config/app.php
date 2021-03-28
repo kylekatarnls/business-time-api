@@ -161,7 +161,7 @@ return [
     })(env('SPECIAL_LIMIT')),
 
     'quota_factor' => [
-        10 => 3,
+        1214 => 3,
     ],
 
     /*
