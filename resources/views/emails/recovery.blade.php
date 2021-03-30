@@ -4,7 +4,7 @@
     Suite à un incendit du datacenter de Strasbourg d'OVH utilisé par Vicopo, nous avons
     dû installer l'application sur un nouveau serveur.<br /><br />
 
-    Votre nouveau mot de passe&nbsp;:<br /><br />
+    Votre nouveau mot de passe est&nbsp;:<br /><br />
 
     <strong style="font-family: monospace;">{{ $password }}</strong><br /><br />
 
@@ -26,7 +26,8 @@
         @endforeach
     </ul>
 
-    Si une propriété est manquante nous vous prions de bien vouloir l'enregistrer sur
+    Si une propriété est manquante ou incorrecte, nous vous prions de bien vouloir l'enregistrer
+    ou la supprimer sur
     <a href="https://vicopo.selfbuild.fr/dashboard">votre tableau de bord</a>&nbsp;:
     <a href="https://vicopo.selfbuild.fr/dashboard">https://vicopo.selfbuild.fr/dashboard</a><br /><br />
 
@@ -34,7 +35,6 @@
     <a href="https://www.ovh.com/fr/news/presse/cpl1785.dernieres-informations-notre-site-strasbourg">Suivi de l'incident OVH</a><br /><br />
     <a href="https://github.com/kylekatarnls/vicopo/issues/31">Suivi de la remise en service de Vicopo</a><br /><br />
 
-    Nous vous prions d'accepter nos sincères excuses pour le désagrément et espérons recouvrire rapidement de l'incident
-    si vous avez étez vous-même impacté,<br /><br />
+    Nous vous prions d'accepter nos sincères excuses pour le désagrément,<br /><br />
     Vicopo
 </div>

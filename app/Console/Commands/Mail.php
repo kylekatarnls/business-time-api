@@ -7,6 +7,7 @@ use App\Models\ApiAuthorization;
 use App\Models\User;
 use App\Util\SendMail;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail as MailFacade;
 use InvalidArgumentException;
 
 final class Mail extends Command
@@ -66,7 +67,7 @@ final class Mail extends Command
             ? $user->email
             : config('app.super_admin');
 
-        $this->sendMail($email, new Recovery([
+        MailFacade::to($email)->send(new Recovery([
             'name' => $user->name,
             'password' => $this->passwords[$user->email],
             'plan' => $user->getPlan()['name'],
