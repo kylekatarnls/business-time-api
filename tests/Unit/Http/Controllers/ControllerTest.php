@@ -8,6 +8,7 @@ use App\Models\ApiAuthorization;
 use App\Models\Plan;
 use App\Models\User;
 use App\View\Components\SubscriptionBilling;
+use Carbon\CarbonImmutable;
 use Carbon\Carbonite;
 use Carbon\Carbonite\Attribute\Freeze;
 use Illuminate\Http\RedirectResponse;
@@ -16,11 +17,14 @@ use Illuminate\Http\Response;
 use Illuminate\Session\Store;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use Illuminate\View\Factory;
+use Laravel\Cashier\Subscription as CashierSubscription;
 use ReflectionMethod;
 use SessionHandler;
+use Stripe\Collection as StripeCollection;
 use Tests\TestCase;
 
 final class ControllerTest extends TestCase
@@ -152,8 +156,13 @@ final class ControllerTest extends TestCase
         );
     }
 
-    public function testIncreaseLimit(): void
+    /**
+     * @dataProvider getIncreaseLimitConfig
+     */
+    public function testIncreaseLimit(?string $expectedOldDomain, array $config): void
     {
+        $originalConfig = config('app.authorizations');
+        Config::set('app.authorizations', $config);
         $ziggy = $this->newZiggy();
         Auth::login($ziggy);
         $controller = new Controller();
@@ -166,7 +175,16 @@ final class ControllerTest extends TestCase
 
         [$controller, $request, $session] = $this->getControllerFor($ziggy, [], [], ['increase-limit' => 'foo.bar.com']);
         $controller->dashboard($request);
-        $this->assertSame('foo.bar.com', $session->getOldInput('domain'));
+
+        $this->assertSame($expectedOldDomain, $session->getOldInput('domain'));
+
+        Config::set('app.authorizations', $originalConfig);
+    }
+
+    public function getIncreaseLimitConfig(): iterable
+    {
+        yield ['foo.bar.com', ['domain', 'ip']];
+        yield [null, []];
     }
 
     public function testCancelSubscribe(): void
@@ -470,6 +488,79 @@ final class ControllerTest extends TestCase
         Auth::logout();
     }
 
+    public function testSubscribeClearCache(): void
+    {
+        $ziggy = $this->newZiggy();
+        $ziggy->apiAuthorizations()->create([
+            'name' => 'Music',
+            'type' => 'domain',
+            'value' => 'music.github.io',
+        ])->verify();
+        $dataFile = __DIR__ . '/../../../../data/properties/domain/music.github.io.php';
+        file_put_contents($dataFile, '<?php return [];');
+        $graceFile = __DIR__ . '/../../../../data/properties-grace/music.github.io.txt';
+        file_put_contents($graceFile, '2');
+
+        Auth::login($ziggy);
+        $paymentMethod = $this->getPaymentMethod();
+        [$controller, $request] = $this->getControllerFor($ziggy, [
+            'plan' => 'pro',
+            'recurrence' => 'monthly',
+            'cardChoice' => '4242424242424242',
+            'stripePaymentMethod' => $paymentMethod->id,
+        ]);
+        $controller->subscribe($request);
+
+        $this->assertFileDoesNotExist($dataFile);
+        $this->assertFileDoesNotExist($graceFile);
+
+        Auth::logout();
+    }
+
+    public function testSubscribeUnknownRecurrence(): void
+    {
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $paymentMethod = $this->getPaymentMethod();
+        [$controller, $request] = $this->getControllerFor($ziggy, [
+            'plan' => 'pro',
+            'recurrence' => 'weekly',
+            'cardChoice' => '4242424242424242',
+            'stripePaymentMethod' => $paymentMethod->id,
+        ]);
+        /** @var RedirectResponse $redirection */
+        $redirection = $controller->subscribe($request);
+
+        $this->assertInstanceOf(RedirectResponse::class, $redirection);
+        $this->assertTrue($redirection->isRedirect(route('plan')));
+        $this->assertSame(
+            "Veuillez sélectionner l'offre mensuelle ou annuelle d'un des abonnements.",
+            $redirection->getSession()->get('paymentError'),
+        );
+
+        $ziggy = $this->newZiggy();
+        Auth::login($ziggy);
+        $paymentMethod = $this->getPaymentMethod();
+        [$controller] = $this->getControllerFor($ziggy, [
+            'plan' => 'pro',
+            'recurrence' => 'monthly',
+            'cardChoice' => '4242424242424242',
+            'stripePaymentMethod' => $paymentMethod->id,
+        ]);
+        $recordSubscription = new ReflectionMethod(Controller::class, 'recordSubscription');
+        $recordSubscription->setAccessible(true);
+        $subscription = $recordSubscription->invoke(
+            $controller,
+            $ziggy,
+            'pro',
+            'monthly',
+            $paymentMethod->id,
+            '4242424242424242',
+        );
+
+        $this->assertInstanceOf(CashierSubscription::class, $subscription);
+    }
+
     public function testConfirmIntent(): void
     {
         $stripe = $this->getStripeClient();
@@ -610,6 +701,55 @@ final class ControllerTest extends TestCase
         Carbonite::elapse('6 months');
 
         $this->assertSame(200.0, round($getPlansCredit->invoke($this->getControllerFor($ziggy)[0]), -1));
+    }
+
+    public function testGetNextCounterReset(): void
+    {
+        $getNextCounterResetMethod = new ReflectionMethod(Controller::class, 'getNextCounterReset');
+        $getNextCounterResetMethod->setAccessible(true);
+        $controller = new Controller();
+        $getNextCounterReset = static fn ($date) => $getNextCounterResetMethod->invoke(
+            $controller,
+            CarbonImmutable::parse($date),
+        );
+
+        Carbonite::freeze('2021-02-27 14:42:33');
+
+        $this->assertSame('lundi à 00:00', $getNextCounterReset('2021-01-30 20:50:12'));
+        $this->assertSame('lundi à 20:50', $getNextCounterReset('2021-01-01 20:50:12'));
+        $this->assertSame('15/03/2021', $getNextCounterReset('2021-01-15 20:50:12'));
+        $this->assertSame('15/03/2021', $getNextCounterReset('2021-02-15 20:50:12'));
+        $this->assertSame('Demain à 20:50', $getNextCounterReset('2021-01-28 20:50:12'));
+
+        Carbonite::freeze('2021-03-31 14:42:33');
+
+        $this->assertSame('Aujourd’hui à 18:24', $getNextCounterReset('2021-01-31 18:24:58'));
+        $this->assertSame('01/05/2021', $getNextCounterReset('2021-01-31 12:24:58'));
+    }
+
+    public function testGetUserCharges(): void
+    {
+        $getUserChargesMethod = new ReflectionMethod(Controller::class, 'getUserCharges');
+        $getUserChargesMethod->setAccessible(true);
+        $controller = new Controller();
+        $getUserCharges = static fn (...$args) => $getUserChargesMethod->invoke($controller, ...$args);
+
+        $ziggy = $this->newZiggy();
+        $customerId = $ziggy->createAsStripeCustomer()->id;
+        $paymentMethod = $this->getPaymentMethod();
+        $ziggy->addPaymentMethod($paymentMethod);
+        $ziggy->charge(499, $paymentMethod);
+
+        $collection = $getUserCharges(null);
+
+        $this->assertIsIterable($collection);
+        $this->assertCount(0, $collection);
+
+        $collection = $getUserCharges($customerId);
+
+        $this->assertIsIterable($collection);
+        $this->assertCount(1, $collection);
+        $this->assertSame(499, iterator_to_array($collection)[0]['amount']);
     }
 
     /**

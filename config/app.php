@@ -125,7 +125,7 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
-    'authorizations' => explode(',', env('AUTHORIZATIONS_TYPES', 'domain,ip')),
+    'authorizations' => array_values(array_filter(explode(',', env('AUTHORIZATIONS_TYPES', 'domain,ip') ?? ''))),
 
     'default_currency' => 'eur',
 

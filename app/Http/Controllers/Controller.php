@@ -147,9 +147,14 @@ final class Controller extends AbstractController
             $types,
         );
         $defaultAuthorization =
-            Arr::first($authorizations, static fn(object $data) => $session->hasOldInput($data->type)) ?:
-                $authorizations[0];
-        $defaultAuthorization->default = true;
+            Arr::first($authorizations, static fn(object $data) => $session->hasOldInput($data->type))
+                ?: $authorizations[0]
+                ?? null;
+
+        if ($defaultAuthorization) {
+            $defaultAuthorization->default = true;
+        }
+
         $plans = Plan::getPlansData();
         $planId = $user->getPlanId(array_keys($plans));
         $nextBill = '';
@@ -616,34 +621,22 @@ final class Controller extends AbstractController
 
     /**
      * @return StripeCollection|Charge[]
-     * @codeCoverageIgnore
      */
-    private function getUserCharges(?string $customerId): StripeCollection
+    private function getUserCharges(?string $customerId): StripeCollection|Collection
     {
         return $customerId
             ? $this->getStripeClient()->charges->all(['customer' => $customerId])
-            : new StripeCollection();
+            : collect();
     }
 
     /**
      * @return StripeCollection|PaymentIntent[]
      */
-    private function getUserPaymentsIntents(?string $customerId): StripeCollection
+    private function getUserPaymentsIntents(?string $customerId): StripeCollection|Collection
     {
         return $customerId
             ? $this->getStripeClient()->paymentIntents->all(['customer' => $customerId])
-            : new StripeCollection();
-    }
-
-    /**
-     * @return StripeCollection|Refund[]
-     * @codeCoverageIgnore
-     */
-    private function getUserRefunds(?string $customerId): StripeCollection
-    {
-        return $customerId
-            ? $this->getStripeClient()->refunds->all()
-            : new StripeCollection();
+            : collect();
     }
 
     /**
