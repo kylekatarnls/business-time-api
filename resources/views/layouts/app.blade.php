@@ -7,15 +7,12 @@
 
         <title>{{ config('app.name', 'Vicopo') }}</title>
 
-        <!-- Fonts -->
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap">
 
-        <!-- Styles -->
         <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
         @livewireStyles
 
-        <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.7.0/dist/alpine.js" defer></script>
 
         <script type="text/javascript">
@@ -42,14 +39,12 @@
                 @livewire('navigation-dropdown')
             @endif
 
-            <!-- Page Heading -->
             <header class="bg-white shadow">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     {{ $header ?? config('app.name', 'Vicopo') }}
                 </div>
             </header>
 
-            <!-- Page Content -->
             <main>
                 {{ $slot }}
             </main>
