@@ -46,7 +46,7 @@ $pdo->exec("SET sql_mode=(SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));
 $query = $pdo->query('
     SELECT `date`, `count`
     FROM `daily_log`
-    WHERE `date` >= DATE_SUB(DATE(NOW()), INTERVAL ' . GLOBAL_INTERVAL . ' DAY)
+    WHERE `date` >= DATE_SUB(DATE(NOW()), INTERVAL ' . (GLOBAL_INTERVAL + 1) . ' DAY)
 ');
 $counts = [];
 

@@ -39,9 +39,6 @@ if (isset($_POST['user'], $_POST['pass'])) {
 	<?php if (!empty($_SESSION['id'])) { ?>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqPlot/1.0.8/jquery.jqplot.min.css">
 	<?php } ?>
-	<style type="text/css">
-		.canvasjs-chart-credit { display: none; }
-	</style>
 </head>
 <body>
 	<?php
@@ -53,10 +50,10 @@ if (isset($_POST['user'], $_POST['pass'])) {
 		) .
 		'.php';
 	?>
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 	<?php if (!empty($_SESSION['id'])) { ?>
-		<script type="text/javascript" src="/admin/jquery.canvasjs.min.js"></script>
+		<script type="text/javascript" src="/js/jquery.canvasjs.min.js"></script>
 	<?php } ?>
 	<script src="app.js"></script>
 </body>
