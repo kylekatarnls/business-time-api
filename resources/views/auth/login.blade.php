@@ -55,6 +55,14 @@
                     {{ __('Login') }}
                 </x-jet-button>
             </div>
+
+            @if (empty($_COOKIE['reg']) && now()->isBefore('2021-06-01'))
+                <p style="font-size: 0.9em; margin-top: 1em;">
+                    Suite à un incendit ayant détruit notre datacenter, les comptes gratuits créés entre janvier et mars
+                    ont été perdu, si vous vous étiez déjà inscrit, nous vous prions de bien vouloir recréer votre compte
+                    et vous prions de nous excuser pour la gène occasionnée.
+                </p>
+            @endif
         </form>
     </x-jet-authentication-card>
 </x-guest-layout>

@@ -223,6 +223,12 @@ final class Controller extends AbstractController
             );
         }
 
+        if (!$request->cookie('reg')) {
+            $view->headers->setCookie(
+                Cookie::forever('reg', 1),
+            );
+        }
+
         return $view;
     }
 
