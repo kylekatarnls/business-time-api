@@ -5,9 +5,7 @@ declare(strict_types=1);
 error_reporting(-1);
 ini_set('display_errors', 'on');
 
-define('GLOBAL_TOP', isset($_GET['top']) && $_GET['top'] >= 1 ? intval($_GET['top']) : 10);
-define('GLOBAL_INTERVAL', isset($_GET['interval']) && $_GET['interval'] >= 1 ? intval($_GET['interval']) : 20);
-define('EMPTY_STRING', '(empty)');
+include __DIR__ . '/get-log-counts.php';
 
 $config = @include __DIR__ . '/../../bootstrap/cache/config.php' ?: [];
 
@@ -32,8 +30,6 @@ function countStyle($count, array $config)
 
     return '';
 }
-
-include __DIR__ . '/get-log-counts.php';
 
 define('HAS_FILTER', !(empty($_GET['ip']) && empty($_GET['code']) && empty($_GET['ville']) && empty($_GET['domain'])));
 

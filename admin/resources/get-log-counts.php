@@ -1,5 +1,9 @@
 <?php
 
+define('GLOBAL_TOP', isset($_GET['top']) && $_GET['top'] >= 1 ? intval($_GET['top']) : 10);
+define('GLOBAL_INTERVAL', isset($_GET['interval']) && $_GET['interval'] >= 1 ? intval($_GET['interval']) : 20);
+define('EMPTY_STRING', '(empty)');
+
 /** @var PDO $pdo */
 $pdo = null;
 
