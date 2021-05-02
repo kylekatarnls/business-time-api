@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Authorization\AuthorizationFactory;
 use App\Models\ApiAuthorization;
 use App\Models\User;
+use Generator;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -121,24 +122,11 @@ final class AuthorizationController extends AbstractController
     {
         $preferHtml = $this->preferHtml($request);
         $ips = array_unique($request->getClientIps());
-        $authorizations = $this->getVerifiableAuthorizations($ips, $email, $ip);
+        $authorizations = $this->getVerifiableAuthorizations($ips, $email, $ip)
+            ->filter(static fn (ApiAuthorization $authorization) => $authorization->getVerificationToken() === $token);
 
         foreach ($authorizations as $authorization) {
-            if ($authorization->getVerificationToken() === $token) {
-                if (!$authorization->verify()) {
-                    throw new RuntimeException(
-                        __('Unable to verify due to unknown error, please retry.'),
-                    );
-                }
-
-                self::clearCache('ip', $authorization->value);
-
-                if ($preferHtml) {
-                    return ResponseFacade::view('ip-authorized', ['authorization' => $authorization]);
-                }
-
-                return ResponseFacade::make('OK');
-            }
+            return $this->verifyApiAuthorization($authorization, $preferHtml);
         }
 
         $count = count($ips);
@@ -156,6 +144,23 @@ final class AuthorizationController extends AbstractController
             : ResponseFacade::make(__('Error') . "\n$error");
 
         return $response->setStatusCode(401);
+    }
+
+    private function verifyApiAuthorization(ApiAuthorization $authorization, bool $preferHtml): Response
+    {
+        if (!$authorization->verify()) {
+            throw new RuntimeException(
+                __('Unable to verify due to unknown error, please retry.'),
+            );
+        }
+
+        self::clearCache('ip', $authorization->value);
+
+        if ($preferHtml) {
+            return ResponseFacade::view('ip-authorized', ['authorization' => $authorization]);
+        }
+
+        return ResponseFacade::make('OK');
     }
 
     private static function getUnsecureContent(string $url): string
@@ -243,6 +248,10 @@ final class AuthorizationController extends AbstractController
 
         /** @var User $user */
         $user = User::where(['email' => $email])->first();
+
+        if (!$user) {
+            return collect([]);
+        }
 
         return $user->apiAuthorizations()
             ->where('type', 'ip')
