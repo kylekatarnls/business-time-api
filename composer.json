@@ -24,7 +24,8 @@
         "laravel/sanctum": "^2.9",
         "laravel/tinker": "^2.6",
         "livewire/livewire": "^2.0",
-        "stripe/stripe-php": "^7.61"
+        "stripe/stripe-php": "^7.61",
+        "opis/closure": "4.x-dev as 3.999.999"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
