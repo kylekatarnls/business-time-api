@@ -13,7 +13,10 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Util\Number;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonPeriod;
+use Generator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -25,6 +28,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Laravel\Cashier\Exceptions\IncompletePayment;
@@ -178,11 +182,14 @@ final class Controller extends AbstractController
 
         $paidRequests = $user->getPaidRequests();
         $limit = $user->getLimit($plans[$planId] ?? null);
+        $hits = $limit ? $this->getHits($authorizations) : [];
 
         $view = ResponseFacade::view('dashboard', [
             'user'                  => $user,
             'onBehalf'              => $onBehalf,
             'domain'                => $domain,
+            'hitsDaysCount'         => count($hits) ? count($hits[array_key_first($hits)]) : 0,
+            'hits'                  => $hits,
             'name'                  => old('name') ?: ($isIP
                 ? __('Server')
                 : preg_replace('/\.[a-z]+$/', '', $domain ?: '')),
@@ -740,5 +747,53 @@ final class Controller extends AbstractController
                 ],
             ]),
         ]), $keys, $plans));
+    }
+
+    private function getHits(array $apiAuthorizations): array
+    {
+        $end = CarbonImmutable::yesterday();
+        $start = $end->subDays(config('app.dashboard.log_days'));
+        $dailyLogs = DB::table('daily_filtered_log')
+            ->whereDate('date', '>=', $start)
+            ->whereDate('date', '<', $end)
+            ->where(fn (Builder $query) => $this->whereApiAuthorizations($query, $apiAuthorizations))
+            ->orderBy('date');
+
+        $properties = [];
+
+        foreach ($dailyLogs->get() as $data) {
+            $properties[$data->key . ':' . $data->value][$data->date] = $data->count;
+        }
+
+        return array_map(
+            fn (array $counts) => iterator_to_array($this->reorderCounts($start->daysUntil($end), $counts)),
+            $properties,
+        );
+    }
+
+    /**
+     * @param array<string, int> $counts
+     */
+    private function reorderCounts(CarbonPeriod $days, array $counts): Generator
+    {
+        foreach ($days as $day) {
+            $date = $day->format('Y-m-d');
+            yield $date => $counts[$date] ?? 0;
+        }
+    }
+
+    private function whereApiAuthorizations(Builder $query, array $apiAuthorizations): void
+    {
+        foreach ($apiAuthorizations as $group) {
+            /** @var ApiAuthorization $apiAuthorization */
+            foreach ($group->list as $apiAuthorization) {
+                if ($apiAuthorization->isVerified()) {
+                    $query->orWhere(static fn(Builder $subQuery) => $subQuery->where([
+                        'key'   => $group->type,
+                        'value' => $apiAuthorization->value,
+                    ]));
+                }
+            }
+        }
     }
 }

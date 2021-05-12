@@ -12,8 +12,8 @@ $('[data-graph]').each(function () {
         animationEnabled: true,
 		data: [
 			{
-				type: "spline", //change it to line, area, column, pie, etc
-				dataPoints: $graph.data('graph').map(function (data, index) {
+				type: 'line',
+				dataPoints: $graph.data('graph').map(function (data) {
 					return {
 						label: data[0].split(/\s/)[0],
 						y: data[1]
