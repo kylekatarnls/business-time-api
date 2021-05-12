@@ -33,7 +33,14 @@ final class AuthorizationController extends AbstractController
         }
 
         try {
-            $this->getUser()->apiAuthorizations()->create([
+            $authorizations = $this->getUser()->apiAuthorizations();
+
+            $authorizations->where([
+                'type'  => $type,
+                'value' => $value,
+            ])->whereNotNull('deleted_at')->forceDelete();
+
+            $authorizations->create([
                 'name'  => $request->get('name'),
                 'type'  => $type,
                 'value' => $value,
