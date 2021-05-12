@@ -269,6 +269,15 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('OK', $response->getContent());
 
+        $response = $controller->verifyIp($request, 'foobar@foobar.com', $token, $ip);
+        $this->assertSame(401, $response->getStatusCode());
+        $this->assertSame(
+            "Erreur\n" .
+            "Le jeton $token n'est pas pour l'adresse IP : 189.204.12.55. " .
+            "Veuillez accéder à cet URL depuis votre serveur avec l'IP 189.204.12.55.",
+            $response->getContent()
+        );
+
         $request = new Request();
         $request->server->set('REMOTE_ADDR', $ip);
         $request->headers->set(
@@ -313,7 +322,8 @@ final class AuthorizationControllerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(401, $response->getStatusCode());
         $this->assertStringContainsString(
-            "Le jeton $token n&#039;est pas pour l&#039;adresse IP : 1.2.3.4. Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP $ip.",
+            "Le jeton $token n&#039;est pas pour l&#039;adresse IP : 1.2.3.4. " .
+            "Veuillez accéder à cet URL depuis votre serveur avec l&#039;IP $ip.",
             $response->getContent(),
         );
         $this->assertStringContainsString(
