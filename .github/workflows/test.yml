@@ -56,6 +56,10 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Initialize Environment Config
+        run: |
+          cp .env.test.template .env
+
       - name: Install Composer Dependencies
         run: |
           composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }} --no-scripts;
@@ -64,7 +68,6 @@ jobs:
 
       - name: Initialize Environment
         run: |
-          cp .env.test.template .env
           chmod -R 777 storage bootstrap/cache
           php artisan key:generate
           php artisan config:clear

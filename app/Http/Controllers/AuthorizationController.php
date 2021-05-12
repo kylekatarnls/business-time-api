@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Authorization\AuthorizationFactory;
 use App\Models\ApiAuthorization;
 use App\Models\User;
-use Generator;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
