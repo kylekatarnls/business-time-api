@@ -755,7 +755,7 @@ final class Controller extends AbstractController
         $start = $end->subDays(config('app.dashboard.log_days'));
         $dailyLogs = DB::table('daily_filtered_log')
             ->whereDate('date', '>=', $start)
-            ->whereDate('date', '<', $end)
+            ->whereDate('date', '<=', $end->endOfDay())
             ->where(fn (Builder $query) => $this->whereApiAuthorizations($query, $apiAuthorizations))
             ->orderBy('date');
 
