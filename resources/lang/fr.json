@@ -358,5 +358,5 @@
     "Subscription end: :date": "Fin de la souscription : :date",
     "Activate auto-renew": "Activer le renouvellement automatique",
     "Server": "Serveur",
-    "Yesterday|Last %count% days": "Hier|%count% derniers jours"
+    "Yesterday|Last :count days": "Hier|:count derniers jours"
 }
