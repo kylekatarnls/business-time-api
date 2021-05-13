@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f24c7dc3adbb64769121d1dd0822b826",
+    "content-hash": "e733407db756b7f7a4f4c1500c108046",
     "packages": [
         {
             "name": "arcanedev/log-viewer",
@@ -2527,39 +2527,42 @@
         },
         {
             "name": "opis/closure",
-            "version": "4.x-dev",
+            "version": "3.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opis/closure.git",
-                "reference": "48557b54f6bf12cd85db14a7cf0c05656c6ce363"
+                "reference": "06e2ebd25f2869e54a306dda991f7db58066f7f6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opis/closure/zipball/48557b54f6bf12cd85db14a7cf0c05656c6ce363",
-                "reference": "48557b54f6bf12cd85db14a7cf0c05656c6ce363",
+                "url": "https://api.github.com/repos/opis/closure/zipball/06e2ebd25f2869e54a306dda991f7db58066f7f6",
+                "reference": "06e2ebd25f2869e54a306dda991f7db58066f7f6",
                 "shasum": ""
             },
             "require": {
-                "ext-ffi": "*",
-                "php": "^7.4 || ^8.0"
+                "php": "^5.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^9.0"
+                "jeremeamia/superclosure": "^2.0",
+                "phpunit/phpunit": "^4.0 || ^5.0 || ^6.0 || ^7.0 || ^8.0 || ^9.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "4.x-dev"
+                    "dev-master": "3.6.x-dev"
                 }
             },
             "autoload": {
                 "psr-4": {
                     "Opis\\Closure\\": "src/"
-                }
+                },
+                "files": [
+                    "functions.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "Apache-2.0"
+                "MIT"
             ],
             "authors": [
                 {
@@ -2583,9 +2586,9 @@
             ],
             "support": {
                 "issues": "https://github.com/opis/closure/issues",
-                "source": "https://github.com/opis/closure/tree/4.x"
+                "source": "https://github.com/opis/closure/tree/3.6.2"
             },
-            "time": "2021-05-03T16:25:08+00:00"
+            "time": "2021-04-09T13:42:10+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
@@ -8810,18 +8813,9 @@
             "time": "2020-07-12T23:59:07+00:00"
         }
     ],
-    "aliases": [
-        {
-            "package": "opis/closure",
-            "version": "4.9999999.9999999.9999999-dev",
-            "alias": "3.999.999",
-            "alias_normalized": "3.999.999.0"
-        }
-    ],
+    "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {
-        "opis/closure": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

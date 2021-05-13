@@ -62,9 +62,10 @@ jobs:
 
       - name: Install Composer Dependencies
         run: |
-          composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }} --no-scripts;
+          ${{ matrix.php >= 8.1 && 'composer require "opis/closure:4.x-dev as 3.999.999" --no-update;' || '' }}
+          composer ${{ matrix.php >= 8.1 && 'update --ignore-platform-req=php' || 'install' }} --no-scripts;
           php tests/fix-compatibility.php;
-          composer install ${{ matrix.php >= 8.1 && '--ignore-platform-req=php' || '' }};
+          composer ${{ matrix.php >= 8.1 && 'update --ignore-platform-req=php' || 'install' }};
 
       - name: Initialize Environment
         run: |
