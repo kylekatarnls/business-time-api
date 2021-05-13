@@ -123,6 +123,47 @@
                                 {{ __('You can raise the total limit for your account subscribing a plan.') }}
                             </p>
                         @endif
+
+                        @if($hitsDaysCount >= 1)
+                            <div data-graph="{{ json_encode($hits) }}" style="height: {{ 220 + 25 * count($hits) }}px;"></div>
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqPlot/1.0.8/jquery.jqplot.min.css">
+                            <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+                            <script src="/js/jquery.canvasjs.min.js"></script>
+                            <script>
+                                $('[data-graph]').each(function () {
+                                    var $graph = $(this);
+                                    var data = $graph.data('graph');
+                                    var properties = Object.keys(data);
+
+                                    $graph.CanvasJSChart({
+                                        title: {
+                                            text: "{{ trans_choice('Yesterday|Last %count% days', ['%count%' => $hitsDaysCount]) }}"
+                                        },
+                                        animationEnabled: true,
+                                        legend: {
+                                            show: true,
+                                            location: 'e',
+                                            placement: 'outside'
+                                        },
+                                        data: properties.map(function (property) {
+                                            var days = Object.keys(data[property]);
+
+                                            return {
+                                                type: 'line',
+                                                name: property.replace(/^.+:/, ''),
+                                                showInLegend: true,
+                                                dataPoints: days.map(function (day) {
+                                                    return {
+                                                        label: new Date(day + ' 00:00:00').toLocaleDateString(),
+                                                        y: data[property][day]
+                                                    };
+                                                })
+                                            };
+                                        })
+                                    });
+                                });
+                            </script>
+                        @endif
                     @endif
 
                     @foreach($authorizations as $authorizationsData)

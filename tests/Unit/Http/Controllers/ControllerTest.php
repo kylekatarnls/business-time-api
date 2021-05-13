@@ -11,6 +11,7 @@ use App\View\Components\SubscriptionBilling;
 use Carbon\CarbonImmutable;
 use Carbon\Carbonite;
 use Carbon\Carbonite\Attribute\Freeze;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -18,6 +19,7 @@ use Illuminate\Session\Store;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use Illuminate\View\Factory;
@@ -295,6 +297,7 @@ final class ControllerTest extends TestCase
         $this->assertStringNotContainsString('ziggy.com', $dashboard);
     }
 
+    #[Freeze]
     public function testSubscription(): void
     {
         $ziggy = $this->newZiggy();
@@ -318,10 +321,85 @@ final class ControllerTest extends TestCase
             $content,
         );
 
+        $yesterday = CarbonImmutable::yesterday();
+        $yesterdayDate = $yesterday->format('Y-m-d');
+        $beforeYesterdayDate = $yesterday->subDay()->format('Y-m-d');
+
+        DB::table('daily_filtered_log')
+            ->where('key', 'domain')
+            ->whereIn('value', ['biz.github.io', 'web.github.io'])
+            ->delete();
+        DB::table('daily_filtered_log')->insert([
+            [
+                'key' => 'domain',
+                'value' => 'biz.github.io',
+                'date' => $beforeYesterdayDate,
+                'count' => 2536,
+            ],
+            [
+                'key' => 'domain',
+                'value' => 'web.github.io',
+                'date' => $beforeYesterdayDate,
+                'count' => 1458,
+            ],
+            [
+                'key' => 'domain',
+                'value' => 'biz.github.io',
+                'date' => $yesterdayDate,
+                'count' => 4242,
+            ],
+            [
+                'key' => 'domain',
+                'value' => 'web.github.io',
+                'date' => $yesterdayDate,
+                'count' => 9863,
+            ],
+        ]);
+
         $this->subscribePlan($ziggy, 'start', 'monthly');
         $ziggy = $this->reloadUser($ziggy);
         Auth::login($ziggy);
         $content = $this->getDashboardFor($ziggy)->getContent();
+
+        $this->assertSame(1, preg_match('/data-graph="([^"]+)"/', $content, $match));
+
+        $hits = json_decode(htmlspecialchars_decode($match[1]), true);
+
+        $this->assertSame([
+            'domain:web.github.io' => [
+                $yesterday->subDays(30)->format('Y-m-d') => 0,
+                $yesterday->subDays(29)->format('Y-m-d') => 0,
+                $yesterday->subDays(28)->format('Y-m-d') => 0,
+                $yesterday->subDays(27)->format('Y-m-d') => 0,
+                $yesterday->subDays(26)->format('Y-m-d') => 0,
+                $yesterday->subDays(25)->format('Y-m-d') => 0,
+                $yesterday->subDays(24)->format('Y-m-d') => 0,
+                $yesterday->subDays(23)->format('Y-m-d') => 0,
+                $yesterday->subDays(22)->format('Y-m-d') => 0,
+                $yesterday->subDays(21)->format('Y-m-d') => 0,
+                $yesterday->subDays(20)->format('Y-m-d') => 0,
+                $yesterday->subDays(19)->format('Y-m-d') => 0,
+                $yesterday->subDays(18)->format('Y-m-d') => 0,
+                $yesterday->subDays(17)->format('Y-m-d') => 0,
+                $yesterday->subDays(16)->format('Y-m-d') => 0,
+                $yesterday->subDays(15)->format('Y-m-d') => 0,
+                $yesterday->subDays(14)->format('Y-m-d') => 0,
+                $yesterday->subDays(13)->format('Y-m-d') => 0,
+                $yesterday->subDays(12)->format('Y-m-d') => 0,
+                $yesterday->subDays(11)->format('Y-m-d') => 0,
+                $yesterday->subDays(10)->format('Y-m-d') => 0,
+                $yesterday->subDays(9)->format('Y-m-d') => 0,
+                $yesterday->subDays(8)->format('Y-m-d') => 0,
+                $yesterday->subDays(7)->format('Y-m-d') => 0,
+                $yesterday->subDays(6)->format('Y-m-d') => 0,
+                $yesterday->subDays(5)->format('Y-m-d') => 0,
+                $yesterday->subDays(4)->format('Y-m-d') => 0,
+                $yesterday->subDays(3)->format('Y-m-d') => 0,
+                $yesterday->subDays(2)->format('Y-m-d') => 0,
+                $beforeYesterdayDate => 1458,
+                $yesterdayDate => 9863,
+            ],
+        ], $hits);
 
         $this->assertStringContainsString(
             'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',

@@ -160,6 +160,10 @@ return [
         return $limits;
     })(env('SPECIAL_LIMIT')),
 
+    'dashboard' => [
+        'log_days' => 30,
+    ],
+
     'quota_factor' => [
         1214 => 3,
     ],

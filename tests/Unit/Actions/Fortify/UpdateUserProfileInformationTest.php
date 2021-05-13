@@ -130,15 +130,10 @@ final class UpdateUserProfileInformationTest extends TestCase
             }
         };
 
-        try {
-            (new UpdateUserProfileInformation())->update($proxy, [
-                'email' => 'halloween.jack@selfbuild.fr',
-                'name'  => 'Halloween Jack',
-            ]);
-        } catch (ValidationException $exception) {
-            var_dump($exception->errors());
-            exit;
-        }
+        (new UpdateUserProfileInformation())->update($proxy, [
+            'email' => 'halloween.jack@selfbuild.fr',
+            'name'  => 'Halloween Jack',
+        ]);
 
         $this->assertNull($ziggy->email_verified_at);
 
