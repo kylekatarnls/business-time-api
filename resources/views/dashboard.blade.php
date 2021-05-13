@@ -137,7 +137,11 @@
 
                                     $graph.CanvasJSChart({
                                         title: {
-                                            text: "{{ trans_choice('Yesterday|Last %count% days', ['%count%' => $hitsDaysCount]) }}"
+                                            text: "{{ trans_choice(
+                                                'Yesterday|Last :count days',
+                                                $hitsDaysCount,
+                                                [':count' => $hitsDaysCount],
+                                            ) }}"
                                         },
                                         animationEnabled: true,
                                         legend: {

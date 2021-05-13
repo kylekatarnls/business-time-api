@@ -402,6 +402,10 @@ final class ControllerTest extends TestCase
         ], $hits);
 
         $this->assertStringContainsString(
+            '31 derniers jours',
+            $content,
+        );
+        $this->assertStringContainsString(
             'Terminer l&#039;abonnement (annuler le renouvellement à échéance).',
             $content,
         );

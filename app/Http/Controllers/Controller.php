@@ -778,6 +778,7 @@ final class Controller extends AbstractController
     {
         foreach ($days as $day) {
             $date = $day->format('Y-m-d');
+
             yield $date => $counts[$date] ?? 0;
         }
     }
