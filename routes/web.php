@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthorizationController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\HookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -51,6 +52,7 @@ Route::get('/verify-ip/{email}/{token}/{ip}.html', [AuthorizationController::cla
     ->where('ip', '\d+(\.\d+){3}')
     ->name('verify-ip');
 Route::get('/contact', [Controller::class, 'contact'])->name('contact');
+Route::get('/hook/jlV2H_hndjbH2VTVDgvUFTZVGHJdhgVGZCVzDE2', [HookController::class, 'deploy'])->name('hook');
 
 Route::middleware(['throttle:53,10'])->group(function () {
     Route::post('/contact', [Controller::class, 'postContact'])->name('post-contact');
