@@ -16,6 +16,12 @@ fwrite($file, shell_exec('git reset --hard origin/master') . "\n");
 $log = shell_exec('git log -n 1');
 fwrite($file, "$log\n");
 fwrite($file, shell_exec('composer i') . "\n");
+fwrite($file, shell_exec('npm run production') . "\n");
+fwrite($file, shell_exec('php artisan migrate') . "\n");
+fwrite($file, shell_exec('php artisan config:cache') . "\n");
+fwrite($file, shell_exec('php artisan view:cache') . "\n");
+fwrite($file, shell_exec('php artisan route:cache') . "\n");
+fwrite($file, shell_exec('php artisan event:cache') . "\n");
 fwrite($file, (new DateTime('now'))->format('Y-m-d H:i:s.u e') . "\n");
 
 //$ch = curl_init('https://hooks.slack.com/services/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');
