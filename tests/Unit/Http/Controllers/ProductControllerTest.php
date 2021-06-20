@@ -12,7 +12,7 @@ final class ProductControllerTest extends TestCase
     public function testWebhooks(): void
     {
         $controller = new ProductController();
-        $file = __DIR__ . '/../../../../data/stripe/hook-2021-02-21--19-26-37--350912.json';
+        $file = __DIR__ . '/../../../../storage/stripe/hook-2021-02-21--19-26-37--350912.json';
         @unlink($file);
         $controller->webhooks();
 

@@ -45,42 +45,10 @@ Artisan::command('db:prod', function () {
     );
 })->purpose('Create bdd_prod.php from .env file');
 
-Artisan::command('refresh', function () {
-    chdir(__DIR__ . '/..');
-
-    require 'job/refresh.php';
-})->purpose('Refresh cache files');
-
 Artisan::command('directories', function () {
-    $dir = __DIR__ . '/../data/stripe';
+    $dir = __DIR__ . '/../storage/stripe';
 
     if (!is_dir($dir)) {
         mkdir($dir);
     }
-
-    $year = (int) date('Y');
-
-    for ($y = 0; $y < 20; $y++) {
-        $dir = __DIR__ . '/../data/date-count/y' . ($year + $y);
-
-        if (!is_dir($dir)) {
-            mkdir($dir);
-        }
-
-        for ($m = 1; $m <= 12; $m++) {
-            $subDir = $dir . '/m' . $m;
-
-            if (!is_dir($subDir)) {
-                mkdir($subDir);
-            }
-        }
-    }
 })->purpose('Refresh cache files');
-
-Artisan::command('seed:days', function () {
-    global $pdo;
-
-    require __DIR__ . '/../bdd_prod.php';
-
-    echo $pdo->exec('UPDATE `log` SET `day` = DATE(`date`) WHERE `day` IS NULL LIMIT 1000') . "\n";
-})->purpose('Display an inspiring quote');

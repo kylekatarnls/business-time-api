@@ -38,7 +38,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: json  dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, redis, memcached
+          extensions: json, dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, redis, memcached
           tools: composer:v2
           coverage: none
 
@@ -80,11 +80,6 @@ jobs:
         env:
           DB_PORT: ${{ job.services.mysql.ports[3306] }}
           DB_USERNAME: root
-
-      - name: Initialize Cities And Zip Codes
-        run: |
-          cp bdd-test.csv bdd3.csv -f
-          php job/refresh.php --local
 
       - name: Run Test Suite
         run: php artisan test
