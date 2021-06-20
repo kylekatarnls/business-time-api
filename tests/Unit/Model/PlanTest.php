@@ -16,7 +16,7 @@ final class PlanTest extends TestCase
         $this->assertSame('990,00', $plan->price(1));
         $this->assertSame([
             'title' => 'Start',
-            'name' => 'Vicopo Start',
+            'name' => 'Business-Time API Start',
             'price' => 990,
             'limit' => 20000,
             'product' => config("plan.start.id"),

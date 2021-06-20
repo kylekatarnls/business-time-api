@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Vicopo'),
+    'name' => env('APP_NAME', 'Business-Time API'),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://vicopo.selfbuild.fr'),
+    'url' => env('APP_URL', 'https://business-time-api.selfbuild.fr'),
 
     'asset_url' => env('ASSET_URL'),
 

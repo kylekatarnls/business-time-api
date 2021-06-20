@@ -30,7 +30,7 @@ final class PlanChange extends Mailable
      */
     public function build(): self
     {
-        return $this->from('no-reply@selfbuild.fr', 'Vicopo')
+        return $this->from('no-reply@selfbuild.fr', config('app.name'))
             ->subject($this->initialSubject ?? __('Plan Change Confirmation'))
             ->view('emails.plan');
     }

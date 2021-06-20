@@ -127,7 +127,7 @@ final class ControllerTest extends TestCase
                 !preg_match('`my@email`', $render) &&
                 preg_match(
                     '`Merci pour votre message, nous reviendrons rapidement vers vous\.'.
-                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+'.
+                    '<br\s?/?><br\s?/?>\s*Business-Time API[\s\S]+'.
                     'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
                     $render),
         );
@@ -140,7 +140,7 @@ final class ControllerTest extends TestCase
                 !preg_match('`my@email`', $render) &&
                 preg_match(
                     '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
-                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    '<br\s?/?><br\s?/?>\s*Business-Time API[\s\S]+' .
                     'My &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
                     $render),
         );
@@ -152,7 +152,7 @@ final class ControllerTest extends TestCase
                 $mail->viewData['content'] === "my@email\n\nMy <strong>message</strong>\non multiple lines." &&
                 preg_match(
                     '`Merci pour votre message, nous reviendrons rapidement vers vous\.' .
-                    '<br\s?/?><br\s?/?>\s*Vicopo[\s\S]+' .
+                    '<br\s?/?><br\s?/?>\s*Business-Time API[\s\S]+' .
                     'my@email<br\s?/?>\n<br\s?/?>\nMy &lt;strong&gt;message&lt;/strong&gt;<br\s?/?>\non multiple lines\.`',
                     $render),
         );
@@ -216,7 +216,7 @@ final class ControllerTest extends TestCase
         $this->assertInstanceOf(Plan::class, $plan);
         $this->assertSame([
             'title'    => 'Guest',
-            'name'     => 'Vicopo Guest',
+            'name'     => 'Business-Time API Guest',
             'price'    => 0,
             'limit'    => 1_000,
             'product'  => 'guest',
@@ -235,7 +235,7 @@ final class ControllerTest extends TestCase
         $this->assertInstanceOf(Plan::class, $plan);
         $this->assertSame([
             'title'    => 'Free',
-            'name'     => 'Vicopo Free',
+            'name'     => 'Business-Time API Free',
             'price'    => 0,
             'limit'    => 5_000,
             'product'  => 'free',

@@ -60,89 +60,14 @@ $staticData = [
     'appName' => config('app.name'),
     'url' => config('app.url'),
 ];
+Route::view('/', 'index', $staticData)->name('index');
 Route::view('/billing/terms', 'terms', $staticData)->name('terms');
 Route::view('/billing/privacy', 'privacy', $staticData)->name('privacy');
 
 if (config('app.debug')) {
-    Route::get('/', function () {
-        require __DIR__.'/../index.php';
-
-        exit;
-    });
-
     Route::get('/phpinfo', function () {
         phpinfo();
 
         exit;
     });
-
-    $files = [
-        'index.js' => [
-            'Content-Type' => 'application/javascript',
-        ],
-        'index.css' => [
-            'Content-Type' => 'text/css',
-        ],
-        'city.jpg' => [
-            'Content-Type' => 'image/jpeg',
-        ],
-    ];
-
-    foreach ($files as $file => $headers) {
-        Route::get("/$file", function () use ($file, $headers) {
-            foreach ($headers as $name => $value) {
-                header("$name: $value");
-            }
-
-            readfile(__DIR__."/../$file");
-
-            exit;
-        });
-    }
-
-    Route::any( '{path}', static function (Request $request) {
-        $uri = ltrim($request->getRequestUri(), '/');
-
-        if (preg_match('`^/?admin(?:/.*)?$`', $uri)) {
-            if (preg_match('`^admin/([^/]*\.(js|css|png|jpe?g))$`', $uri, $match)) {
-                header('Content-type: ' . ($match[2] === 'js' ? 'text/javascript; charset=utf-8' : 'image/' . $match[2]));
-                readfile(__DIR__ . '/../admin/' . $match[1]);
-
-                exit;
-            }
-
-            $_SERVER['HTTPS'] = 'on';
-
-            require __DIR__.'/../admin/index.php';
-
-            exit;
-        }
-
-        preg_match_all(
-            '`RewriteRule (\^.*\$)\s+index\.php\?(.+)\s+\[`',
-            file_get_contents(__DIR__ . '/../.htaccess'),
-            $routes,
-            PREG_SET_ORDER,
-        );
-
-        foreach ($routes as [, $regexp, $params]) {
-            if (preg_match("`$regexp`", $uri, $uriMatches)) {
-                $params = explode('&', $params);
-
-                foreach ($params as $param) {
-                    [$key, $value] = explode('=', $param);
-
-                    $_GET[$key] = preg_replace_callback('/\$(\d+)/', static function ($variable) use ($uriMatches) {
-                        return $uriMatches[(int) $variable[1]];
-                    }, $value);
-                }
-
-                require __DIR__.'/../index.php';
-
-                exit;
-            }
-        }
-
-        throw new NotFoundHttpException();
-    })->where('path', '.*');
 }

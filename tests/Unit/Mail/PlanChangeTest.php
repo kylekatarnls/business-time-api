@@ -19,7 +19,7 @@ final class PlanChangeTest extends TestCase
 
         $this->assertSame([
             'Abonnement activé avec succès !',
-            'Vicopo',
+            'Business-Time API',
             'My message',
         ], $lines);
 
@@ -37,7 +37,7 @@ final class PlanChangeTest extends TestCase
 
         $this->assertSame([
             'Abonnement activé avec succès !',
-            'Vicopo',
+            'Business-Time API',
             '{',
             '&quot;foo&quot;: &quot;bar&quot;,',
             '&quot;biz&quot;: 9',

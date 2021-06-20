@@ -7,7 +7,7 @@ use function App\Util\integerOrInfinity;
 return [
     'guest' => [
         'title' => env('GUEST_PLAN_TITLE', 'Guest'),
-        'name' => env('GUEST_PLAN_NAME', 'Vicopo Guest'),
+        'name' => env('GUEST_PLAN_NAME', 'Business-Time API Guest'),
         'id' => env('GUEST_PLAN_PRODUCT', 'guest'),
         'limit' => integerOrInfinity(env('GUEST_PLAN_LIMIT', 1000)),
         'price' => [
@@ -17,7 +17,7 @@ return [
     ],
     'free' => [
         'title' => env('FREE_PLAN_TITLE', 'Free'),
-        'name' => env('FREE_PLAN_NAME', 'Vicopo Free'),
+        'name' => env('FREE_PLAN_NAME', 'Business-Time API Free'),
         'id' => env('FREE_PLAN_PRODUCT', 'free'),
         'limit' => integerOrInfinity(env('FREE_PLAN_LIMIT', 5000)),
         'price' => [
@@ -27,7 +27,7 @@ return [
     ],
     'start' => [
         'title' => env('START_PLAN_TITLE', 'Start'),
-        'name' => env('START_PLAN_NAME', 'Vicopo Start'),
+        'name' => env('START_PLAN_NAME', 'Business-Time API Start'),
         'id' => env('START_PLAN_PRODUCT'),
         'limit' => integerOrInfinity(env('START_PLAN_LIMIT', 20000)),
         'price' => [
@@ -39,7 +39,7 @@ return [
     ],
     'pro' => [
         'title' => env('PRO_PLAN_TITLE', 'Pro'),
-        'name' => env('PRO_PLAN_NAME', 'Vicopo Pro'),
+        'name' => env('PRO_PLAN_NAME', 'Business-Time API Pro'),
         'id' => env('PRO_PLAN_PRODUCT'),
         'limit' => integerOrInfinity(env('PRO_PLAN_LIMIT', 200000)),
         'price' => [
@@ -51,7 +51,7 @@ return [
     ],
     'premium' => [
         'title' => env('PREMIUM_PLAN_TITLE', 'Premium'),
-        'name' => env('PREMIUM_PLAN_NAME', 'Vicopo Premium'),
+        'name' => env('PREMIUM_PLAN_NAME', 'Business-Time API Premium'),
         'id' => env('PREMIUM_PLAN_PRODUCT'),
         'limit' => integerOrInfinity(env('PRO_PLAN_LIMIT', INF)),
         'price' => [

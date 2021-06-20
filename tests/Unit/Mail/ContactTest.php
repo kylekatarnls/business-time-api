@@ -19,7 +19,7 @@ final class ContactTest extends TestCase
 
         $this->assertSame([
             'Merci pour votre message, nous reviendrons rapidement vers vous.',
-            'Vicopo',
+            'Business-Time API',
             'My message',
         ], $lines);
 
@@ -37,7 +37,7 @@ final class ContactTest extends TestCase
 
         $this->assertSame([
             'Merci pour votre message, nous reviendrons rapidement vers vous.',
-            'Vicopo',
+            'Business-Time API',
             '{',
             '&quot;foo&quot;: &quot;bar&quot;,',
             '&quot;biz&quot;: 9',

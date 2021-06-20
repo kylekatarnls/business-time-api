@@ -33,8 +33,10 @@ final class AdminError extends Mailable
      */
     public function build(): self
     {
-        return $this->from('no-reply@selfbuild.fr', 'Vicopo')
-            ->subject('Vicopo error')
+        $appName = config('app.name');
+
+        return $this->from('no-reply@selfbuild.fr', $appName)
+            ->subject(__(':appName error', ['appName' => $appName]))
             ->view('emails.admin-error', $this->data);
     }
 }

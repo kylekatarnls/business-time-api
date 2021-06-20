@@ -25,7 +25,7 @@ final class LimitThresholdTest extends TestCase
             'Limit exceeded',
             'Quota over 80%',
             'Augmenter la limite totale',
-            'Vicopo',
+            'Business-Time API',
         ], $lines);
 
         $mail = new LimitThreshold([
@@ -47,7 +47,7 @@ final class LimitThresholdTest extends TestCase
             'Limit exceeded',
             'Quota over 80%',
             'Augmenter la limite totale',
-            'Vicopo',
+            'Business-Time API',
             '{',
             '&quot;foo&quot;: &quot;bar&quot;,',
             '&quot;biz&quot;: 9',

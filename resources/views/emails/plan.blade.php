@@ -1,6 +1,6 @@
 <div style="padding: 15px; margin: 15px; font-family: sans-serif;">
     {{ __('Subscription successfully enabled!') }}<br /><br />
-    Vicopo
+    {{ config('app.name') }}
 </div>
 
 @if(!empty($properties))

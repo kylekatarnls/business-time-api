@@ -206,8 +206,8 @@ final class QuotasTest extends TestCase
 
         Log::shouldReceive('info')->with(
             "Notice to ana@selfbuild.fr\n" .
-            "Le quota pour Vicopo Pro a dépassé 80%\n" .
-            'Votre abonnement Vicopo Pro a atteint 80%, ' .
+            "Le quota pour Business-Time API Pro a dépassé 80%\n" .
+            'Votre abonnement Business-Time API Pro a atteint 80%, ' .
             "si vous pensez qu'il peut atteindre 100% avant $end, vous pouvez augmenter la limite en cliquant sur le bouton ci-dessous :",
         );
 
@@ -233,8 +233,8 @@ final class QuotasTest extends TestCase
 
         Log::shouldReceive('info')->with(
             "Notice to ana@selfbuild.fr\n" .
-            "[Attention] Le quota pour Vicopo Pro a dépassé 100%\n" .
-            "Votre abonnement Vicopo Pro est désormais suspendu jusqu'à $end, " .
+            "[Attention] Le quota pour Business-Time API Pro a dépassé 100%\n" .
+            "Votre abonnement Business-Time API Pro est désormais suspendu jusqu'à $end, " .
             "vous pouvez le débloquer en utilisant le bouton ci-desous :",
         );
 

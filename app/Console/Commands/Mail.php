@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\Recovery;
 use App\Models\ApiAuthorization;
 use App\Models\User;
 use App\Util\SendMail;
@@ -55,25 +54,5 @@ final class Mail extends Command
         }
 
         $this->$method(User::findOrFail($userId));
-    }
-
-    private function sendRecoveryMail(User $user)
-    {
-        if (!isset($this->passwords)) {
-            $this->passwords = require __DIR__ . '/../../../secret.php';
-        }
-
-        $email = $this->option('confirm')
-            ? $user->email
-            : config('app.super_admin');
-
-        MailFacade::to($email)->send(new Recovery([
-            'name' => $user->name,
-            'password' => $this->passwords[$user->email],
-            'plan' => $user->getPlan()['name'],
-            'properties' => $user->apiAuthorizations->map(
-                static fn (ApiAuthorization $authorization) => $authorization->value,
-            ),
-        ]));
     }
 }

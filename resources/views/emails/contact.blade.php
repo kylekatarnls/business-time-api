@@ -1,6 +1,6 @@
 <div style="padding: 15px; margin: 15px; font-family: sans-serif;">
     {{ __('Thanks for your message, we\'ll get in touch quickly.') }}<br /><br />
-    Vicopo
+    {{ config('app.name') }}
 </div>
 
 @if(!empty($properties))

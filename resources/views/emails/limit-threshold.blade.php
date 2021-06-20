@@ -10,7 +10,7 @@
         cursor: pointer;
         border-radius: 6px;
     ">{{ __('Raise account total limit') }}</a><br /><br />
-    Vicopo
+    {{ config('app.name') }}
 </div>
 
 @if(!empty($properties))

@@ -36,14 +36,14 @@ final class ContactTest extends TestCase
 
         $this->assertBuiltMailSent(Contact::class, static fn (Contact $mail) => [
             $mail->hasTo('bob@company.com'),
-            $mail->hasFrom('no-reply@selfbuild.fr', 'Vicopo'),
+            $mail->hasFrom('no-reply@selfbuild.fr', 'Business-Time API'),
             $mail->subject === 'Confirmation de message',
             $mail->viewData['content'] === "Hello\nthere!",
         ]);
 
         $this->assertBuiltMailSent(Contact::class, static fn (Contact $mail) => [
             $mail->hasTo('kylekatarnls@gmail.com'),
-            $mail->hasFrom('no-reply@selfbuild.fr', 'Vicopo'),
+            $mail->hasFrom('no-reply@selfbuild.fr', 'Business-Time API'),
             $mail->subject === 'Confirmation de message',
             $mail->viewData['content'] === "bob@company.com\n\nHello\nthere!",
         ]);

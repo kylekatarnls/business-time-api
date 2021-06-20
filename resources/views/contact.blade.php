@@ -52,7 +52,7 @@
 
                 @if($exonerate)
                     <div class="px-6 py-4 mb-6 bg-blue-200 border-blue-400">
-                        {{ __('Vicopo remains free (up to 200 000 requests per month) for:') }}
+                        {{ __('Business-Time API remains free (up to 200 000 requests per month) for:') }}
                         <ul class="list-disc ml-5 my-2">
                             <li>{{ __('websites/softwares dedicated to charity*,') }}</li>
                             <li>{{ __('non-profit organizations*,') }}</li>
@@ -127,7 +127,7 @@
 
                 @if($exonerate)
                     <div class="my-6">
-                        {{ __('Our purpose in keeping Vicopo free under 5 000 requests per month and providing on demand exoneration is to make the software sustainable for the highest number of people while subscriptions will allow us to provide a long-term support, maintenance and new features. If you think there is something else regarding this or your organization, please feel free to tell us via this form.') }}
+                        {{ __('Our purpose in keeping Business-Time API free under 5 000 requests per month and providing on demand exoneration is to make the software sustainable for the highest number of people while subscriptions will allow us to provide a long-term support, maintenance and new features. If you think there is something else regarding this or your organization, please feel free to tell us via this form.') }}
                     </div>
                     <div class="my-6">
                         *{{ __('Under reserve of validity and acceptation of the request based on the website main activity (or "whois" information for IP). We might ask for further proof of the identity, activity, and the necessity for higher requests limits.') }}
