@@ -352,7 +352,7 @@
                                     @endforeach
                                 </div>
                                 <div class="text-gray-400">
-                                    {{ __('You can use either a domain (or sub-domain) if you use VICOPO on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use VICOPO from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the "Domain" type).') }}
+                                    {{ __('You can use either a domain (or sub-domain) if you use :appName on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use :appName from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the "Domain" type).', ['appName' => config('app.name')]) }}
                                 </div>
                             </div>
                         @endif

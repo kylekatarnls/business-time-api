@@ -1,1 +1,1 @@
-<img src="/city.jpg" style="opacity: 0.3;" alt="VICOPO" width="42" height="21">
+<img src="/img/time.svg" style="opacity: 0.3;" alt="{{ config('app.name') }}" width="24" height="24">

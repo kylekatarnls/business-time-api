@@ -153,7 +153,7 @@
     "Domain": "Domaine",
     "Type": "Type",
     "Add authorization": "Ajouter l'autorisation",
-    "You can use either a domain (or sub-domain) if you use VICOPO on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use VICOPO from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the \"Domain\" type).": "Vous pouvez utiliser soit un domaine (ou sous-domaine) si vous utilsiez VICOPO sur une page que de nombreux utilisateurs peuvent consulter pour autoriser plus de requêtes utilisant ce domaine en tant que referer, ou une adresse IP si vous utilisez VICOPO depuis une unique machine à IP fixe (si l'IP n'est pas fixe, vous pouvez quand même modifier l'entête HTTP REFERER HTTP et utiliser le type \"Domaine\").",
+    "You can use either a domain (or sub-domain) if you use :appName on a webpage accessed any users to allow more requests using the given domain as referer, or an IP address if you use :appName from a single machine having a fixed IP (if the IP is not fixed, you can still modify REFERER HTTP header and so use the \"Domain\" type).": "Vous pouvez utiliser soit un domaine (ou sous-domaine) si vous utilsiez :appName sur une page que de nombreux utilisateurs peuvent consulter pour autoriser plus de requêtes utilisant ce domaine en tant que referer, ou une adresse IP si vous utilisez :appName depuis une unique machine à IP fixe (si l'IP n'est pas fixe, vous pouvez quand même modifier l'entête HTTP REFERER HTTP et utiliser le type \"Domaine\").",
     "Invalid format.": "Format invalide.",
     "Unknown error.": "Erreur inconnue.",
     "\":value\" is already registered.": "\":value\" est déjà enregistré.",

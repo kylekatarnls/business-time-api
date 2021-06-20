@@ -12,7 +12,7 @@ final class DocumentationTest extends DuskTestCase
         $this->browse(static function (Browser $browser) {
             $browser
                 ->visit('/')
-                ->assertSee('VICOPO')
+                ->assertSee(config('app.name'))
                 ->waitFor('#code', 2)
                 ->type('#code', '680')
                 ->waitFor('#output a', 2)

@@ -1,3 +1,3 @@
 <a href="/">
-    <h2>VICOPO</h2>
+    <h2>{{ config('app.name') }}</h2>
 </a>
