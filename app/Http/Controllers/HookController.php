@@ -9,6 +9,8 @@ final class HookController extends AbstractController
 {
     public function deploy()
     {
+        ob_end_flush();
+
         echo "Starting hook.\n";
 
         $hook = realpath(__DIR__.'/../../../hook/build.oc-hook.php');
@@ -19,5 +21,7 @@ final class HookController extends AbstractController
         echo shell_exec($command) . "\n";
 
         echo "Hook started.\n";
+
+        exit(0);
     }
 }
