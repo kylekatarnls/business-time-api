@@ -18,7 +18,7 @@ final class ApiController extends AbstractController
             throw new InvalidArgumentException('Missing apiKey');
         }
 
-        if (!ApiKey::whereKey($apiKey)->exists()) {
+        if (!ApiKey::where(['key' => $apiKey])->exists()) {
             throw new InvalidArgumentException('Invalid apiKey');
         }
 
