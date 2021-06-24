@@ -9,6 +9,7 @@ use App\Exceptions\PlanOfferException;
 use App\Mail\Contact;
 use App\Mail\PlanChange;
 use App\Models\ApiAuthorization;
+use App\Models\ApiKey;
 use App\Models\Plan;
 use App\Models\User;
 use App\Util\Number;
@@ -16,6 +17,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Generator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -31,6 +33,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
+use Illuminate\Support\Str;
 use Laravel\Cashier\Exceptions\IncompletePayment;
 use Laravel\Cashier\Exceptions\PaymentActionRequired;
 use Laravel\Cashier\Exceptions\PaymentFailure;
@@ -135,30 +138,15 @@ final class Controller extends AbstractController
             $user = User::find($userId);
         }
 
-        $types = config('app.authorizations');
-        $session = $request->session();
-        $property = $request->query->get('property') ?: $session->get('property');
-        $isIP = $property && preg_match('/^\d/', $property);
-        $subDomain = $isIP ? null : $property;
-        $ip = $isIP ? $property : null;
-        $domain = $subDomain && preg_match('/^(?:.+)?\.([^.]+\.[a-z]+)$/', $subDomain, $match)
-            ? $match[1]
-            : null;
-        $defaultValues = compact('ip', 'domain');
-        $this->prefillDashboardAuthorization($types, $session);
-        $authorizations = array_map(
-            fn(string $type) => $this->getApiAuthorizationsData($type, $user, $defaultValues[$type] ?? null),
-            $types,
-        );
-        $defaultAuthorization =
-            Arr::first($authorizations, static fn(object $data) => $session->hasOldInput($data->type))
-                ?: $authorizations[0]
-                ?? null;
+        $keys = $user->apiKeys();
 
-        if ($defaultAuthorization) {
-            $defaultAuthorization->default = true;
+        if ($keys->count() === 0) {
+            $key = new ApiKey(['key' => Str::random(128)]);
+            $key->save();
+            $keys->sync([$key->id]);
         }
 
+        $keys = $keys->get();
         $plans = Plan::getPlansData();
         $planId = $user->getPlanId(array_keys($plans));
         $nextBill = '';
@@ -180,30 +168,11 @@ final class Controller extends AbstractController
             }
         }
 
-        $paidRequests = $user->getPaidRequests();
-        $limit = $user->getLimit($plans[$planId] ?? null);
-        $hits = $limit ? $this->getHits($authorizations) : [];
-
         $view = ResponseFacade::view('dashboard', [
             'user'                  => $user,
             'onBehalf'              => $onBehalf,
-            'domain'                => $domain,
-            'hitsDaysCount'         => count($hits) ? count($hits[array_key_first($hits)]) : 0,
-            'hits'                  => $hits,
-            'name'                  => old('name') ?: ($isIP
-                ? __('Server')
-                : preg_replace('/\.[a-z]+$/', '', $domain ?: '')),
-            'subDomain'             => $subDomain,
-            'ip'                    => $ip,
-            'property'              => $property,
-            'isIP'                  => $isIP,
-            'type'                  => old('type') ?: ($isIP ? 'ip' : null),
             'planId'                => $planId,
             'plan'                  => $plans[$planId] ?? null,
-            'limit'                 => $limit,
-            'freeLimit'             => $this->getFreePlan()['limit'],
-            'paidRequests'          => $paidRequests,
-            'percentage'            => $limit ? min(1, $paidRequests / $limit) * 100 : null,
             'nextBill'              => [
                 'end'          => $subscription?->cancel_at
                     ? CarbonImmutable::createFromTimestamp($subscription->cancel_at)->calendar()
@@ -214,14 +183,9 @@ final class Controller extends AbstractController
             ],
             'nextCounterReset'      => $nextCounterReset,
             'month'                 => CarbonImmutable::now()->monthName,
-            'authorizations'        => $authorizations,
-            'authorizationsCount'   => array_sum(array_map(static fn ($data) => count($data->list), $authorizations)),
-            'authorisationsErrors'  => (array) $session->pull('authorisationsErrors', []),
-            'verifyError'           => $session->pull('verifyError'),
-            'verifiedAuthorization' => $session->pull('verifiedAuthorization'),
-            'errors'                => (array) $session->pull('errors', []),
-            'hasVerifiedProperties' => $user->hasVerifiedProperties(),
-            'confirmingSubscriptionCancellation' => false,
+            'keys'                  => $keys,
+            'limit'                 => 0,
+            'paidRequests'          => 0,
         ]);
 
         if (!$request->cookie('vuid')) {
