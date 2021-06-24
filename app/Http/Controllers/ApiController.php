@@ -26,7 +26,7 @@ final class ApiController extends AbstractController
         $cachedResult = Cache::get($key);
 
         if ($cachedResult) {
-            return ['cached' => true, 'events' => $cachedResult];
+            return $cachedResult;
         }
 
         $startOfYear = CarbonImmutable::parse("$year-01-01");
@@ -39,6 +39,6 @@ final class ApiController extends AbstractController
         $result = json_decode(file_get_contents($url));
         Cache::forever($key, $result);
 
-        return ['cached' => false, 'events' => $result];
+        return $result;
     }
 }
