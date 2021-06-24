@@ -1,13 +1,10 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ApiController;
 use App\Http\Controllers\AuthorizationController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\HookController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,11 +51,6 @@ Route::get('/verify-ip/{email}/{token}/{ip}.html', [AuthorizationController::cla
     ->name('verify-ip');
 Route::get('/contact', [Controller::class, 'contact'])->name('contact');
 Route::post('/hook/jlV2H_hndjbH2VTVDgvUFTZVGHJdhgVGZCVzDE2', [HookController::class, 'deploy'])->name('hook');
-
-Route::get('/api/calendar/{region}/{year}/events', [ApiController::class, 'events'])
-    ->where('region', '[a-zA-Z._-]+')
-    ->where('year', '\d{4}')
-    ->name('events');
 
 Route::middleware(['throttle:53,10'])->group(function () {
     Route::post('/contact', [Controller::class, 'postContact'])->name('post-contact');
