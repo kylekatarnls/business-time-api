@@ -17,7 +17,7 @@ $log = shell_exec('git log -n 1');
 fwrite($file, "$log\n");
 fwrite($file, shell_exec('composer i') . "\n");
 fwrite($file, shell_exec('npm run production') . "\n");
-fwrite($file, shell_exec('php artisan migrate --no-interaction') . "\n");
+fwrite($file, shell_exec('php artisan migrate --force --no-interaction') . "\n");
 fwrite($file, shell_exec('php artisan config:cache') . "\n");
 fwrite($file, shell_exec('php artisan view:cache') . "\n");
 fwrite($file, shell_exec('php artisan route:cache') . "\n");
