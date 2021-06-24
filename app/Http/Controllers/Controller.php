@@ -139,6 +139,12 @@ final class Controller extends AbstractController
         }
 
         $keys = $user->apiKeys();
+        $url = strtr(config('calendar.google_calendar_api_url'), ['{{region}}' => 'en.usa']) .
+            '?' . http_build_query([
+                'key' => config('calendar.google_calendar_api_key'),
+                'timeMin' => CarbonImmutable::now()->startOfYear()->subDays(2)->toISOString(),
+                'timeMax' => CarbonImmutable::now()->endOfYear()->addDays(2)->toISOString(),
+            ]);
 
         if ($keys->count() === 0) {
             $key = new ApiKey(['key' => Str::random(128)]);
