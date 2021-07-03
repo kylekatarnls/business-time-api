@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('product/webhook', [ProductController::class, 'webhooks']);
 
-Route::get('calendar/{region}/{year}/events', [ApiController::class, 'events'])
-    ->where('region', '[a-zA-Z._-]+')
+Route::get('calendar/{type}/{language}/{region}/{year}/events', [ApiController::class, 'events'])
+    ->where('type', '(?:community|official)')
+    ->where('language', '[a-zA-Z_-]+')
+    ->where('region', '[a-zA-Z_-]+')
     ->where('year', '\d{4}')
     ->name('events');
 

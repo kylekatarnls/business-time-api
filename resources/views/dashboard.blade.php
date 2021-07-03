@@ -142,6 +142,24 @@
 
                 @foreach($keys as $key)
                     <pre class="my-4 px-6 py-4 bg-gray-200 text-sm">{{ $key->key }}</pre>
+                    <p>
+                        <a href="{{ route('events', [
+                            'type' => 'official',
+                            'language' => 'en',
+                            'region' => 'usa',
+                            'year' => '2021',
+                            'apiKey' => $key->key,
+                        ]) }}">Official holidays</a>
+                    </p>
+                    <p>
+                        <a href="{{ route('events', [
+                            'type' => 'community',
+                            'language' => 'en',
+                            'region' => 'usa',
+                            'year' => '2021',
+                            'apiKey' => $key->key,
+                        ]) }}">Community holidays</a>
+                    </p>
                 @endforeach
             </div>
         </div>

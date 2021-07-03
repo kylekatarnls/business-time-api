@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\View\Components\SubscriptionBilling;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         Livewire::component('subscription-billing', SubscriptionBilling::class);
+        Date::use(CarbonImmutable::class);
     }
 
     /**
