@@ -40,7 +40,7 @@ final class OfficialHolidaysService implements HolidaysServiceInterface
         $url = strtr(config('calendar.office_url'), ['{{region}}' => strtr($region, ['-' => '/'])]);
         $calendar = Reader::read(preg_replace(
             '/(:\d{8}T)\d{1,5}Z/',
-            '$1\000000Z',
+            '${1}000000Z',
             $this->downloadService->download($url),
         ));
         $events = [];
